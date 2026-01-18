@@ -4,15 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if CGRAPH_INT_BITS == 32
-typedef int32_t CGraphInt, CGraphId;
-typedef uint32_t CGraphSize;
-#else
-typedef int64_t CGraphInt, CGraphId;
-typedef uint64_t CGraphSize;
-#endif
-
 typedef bool CGraphBool;
+typedef int64_t CGraphInt;
+typedef int64_t CGraphId;
+typedef uint64_t CGraphSize;
 typedef int64_t WeightType;
 typedef WeightType TimeType; // aoa
 typedef WeightType FlowType; // flow

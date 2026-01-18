@@ -42,10 +42,3 @@ void cgraphViewCopyEdge(const CGraphView *view, const CGraphView *copy) {
   default:;
   }
 }
-
-CGraphId *cgraphFind(CGraphId *next, CGraphId *head, const CGraphId id) {
-  CGraphId *predNext = head;
-  while (*predNext != INVALID_ID && *predNext != id)
-    predNext = next + *predNext;
-  return *predNext == INVALID_ID ? NULL : predNext;
-}

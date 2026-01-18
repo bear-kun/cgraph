@@ -4,7 +4,7 @@
 #include "type.h"
 
 void cgraphInit(CGraph *graph, CGraphBool directed, CGraphSize vertCap, CGraphSize edgeCap);
-void cgraphDestroy(const CGraph *graph);
+void cgraphRelease(const CGraph *graph);
 
 CGraphId cgraphAddVert(CGraph *graph);
 CGraphId cgraphAddEdge(CGraph *graph, CGraphId from, CGraphId to, CGraphBool directed);

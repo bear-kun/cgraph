@@ -41,7 +41,7 @@ int testIter() {
     }
   }
   cgraphIterRelease(iter);
-  cgraphDestroy(&graph);
+  cgraphRelease(&graph);
   return 0;
 }
 
@@ -72,7 +72,7 @@ int testMaxFlow() {
   }
   putchar('\n');
 
-  cgraphDestroy(&graph);
+  cgraphRelease(&graph);
   return 0;
 }
 
@@ -111,7 +111,7 @@ int testWeightedPath() {
   }
   putchar('\n');
 
-  cgraphDestroy(&graph);
+  cgraphRelease(&graph);
   return 0;
 }
 
@@ -141,7 +141,7 @@ int testEulerPath() {
   }
   putchar('\n');
 
-  cgraphDestroy(&graph);
+  cgraphRelease(&graph);
   return 0;
 }
 

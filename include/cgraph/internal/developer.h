@@ -19,7 +19,12 @@ void cgraphViewCopyEdge(const CGraphView *view, const CGraphView *copy);
 void cgraphEdgeTraverseV(const CGraphView *view, void *userData,
                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
 
-CGraphId *cgraphFind(CGraphId *next, CGraphId *head, CGraphId id);
+static CGraphId *cgraphFind(CGraphId *next, CGraphId *head, const CGraphId id) {
+  CGraphId *predNext = head;
+  while (*predNext != INVALID_ID && *predNext != id)
+    predNext = next + *predNext;
+  return *predNext == INVALID_ID ? 0 : predNext;
+}
 
 static inline void cgraphUnlink(const CGraphId *next, CGraphId *predNext) {
   *predNext = next[*predNext];

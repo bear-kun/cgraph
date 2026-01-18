@@ -36,7 +36,7 @@ void cgraphInit(CGraph *const graph, const CGraphBool directed,
   }
 }
 
-void cgraphDestroy(const CGraph *const graph) {
+void cgraphRelease(const CGraph *const graph) {
   const CGraphView *view = VIEW(graph);
   free(view->vertNext);
   free(view->edgeHead);
