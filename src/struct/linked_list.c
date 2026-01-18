@@ -1,4 +1,4 @@
-#include "cgraph/linked_list.h"
+#include "struct/linked_list.h"
 #include <stdlib.h>
 
 CGraphLinkedNode *cgraphLinkedInsert(CGraphLinkedNode **predNextPtr,

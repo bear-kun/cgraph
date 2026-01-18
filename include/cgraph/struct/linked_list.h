@@ -1,7 +1,14 @@
 #ifndef GRAPH_LINKED_PATH_H
 #define GRAPH_LINKED_PATH_H
 
-#include "cgraph/type.h"
+#include "../type.h"
+
+typedef struct CGraphLinkedNode_ CGraphLinkedNode;
+
+struct CGraphLinkedNode_ {
+  CGraphLinkedNode *next;
+  CGraphId id;
+};
 
 CGraphLinkedNode *cgraphLinkedInsert(CGraphLinkedNode **predNextPtr,
                                      CGraphId id);

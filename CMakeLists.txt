@@ -3,11 +3,15 @@ project(cgraph C)
 
 set(CMAKE_C_STANDARD 11)
 
-file(GLOB_RECURSE SOURCES "src/alg/*.c" "src/private/*.c")
-add_library(cgraph STATIC ${SOURCES})
-target_include_directories(cgraph PUBLIC include/public)
-target_include_directories(cgraph PRIVATE include/private)
+file(GLOB SOURCES "src/core/*.c")
+add_library(cgraph_core STATIC ${SOURCES})
+target_include_directories(cgraph_core PUBLIC include/cgraph)
 
-add_executable(cgraph_test src/test/test.c)
-target_include_directories(cgraph_test PUBLIC include/public)
-target_link_libraries(cgraph_test PUBLIC cgraph)
+file(GLOB_RECURSE SOURCES "src/alg/*.c" "src/struct/*.c")
+add_library(cgraph_alg STATIC ${SOURCES})
+target_include_directories(cgraph_alg PUBLIC include/cgraph)
+target_link_libraries(cgraph_alg PUBLIC cgraph_core)
+
+add_executable(cgraph_test test/test.c)
+target_include_directories(cgraph_test PUBLIC include)
+target_link_libraries(cgraph_test PUBLIC cgraph_alg)

@@ -1,5 +1,5 @@
-#include "private/iter_internal.h"
-#include "private/structure/stack.h"
+#include "internal/developer.h"
+#include "struct/stack.h"
 #include <stdlib.h>
 
 /*
@@ -23,11 +23,11 @@ static CGraphBool getTargetEdge(Package *pkg, const CGraphId from) {
   CGraphId eid;
   while (cgraphIterNextEdge(pkg->iter, from, &eid, &pkg->to)) {
     if (!pkg->visited[eid]) {
-      pkg->visited[eid] = CGRAPH_TRUE;
-      return CGRAPH_TRUE;
+      pkg->visited[eid] = true;
+      return true;
     }
   }
-  return CGRAPH_FALSE;
+  return false;
 }
 
 static inline CGraphBool insert(Package *pkg, const CGraphId from) {
@@ -39,7 +39,7 @@ static inline CGraphBool insert(Package *pkg, const CGraphId from) {
 static CGraphBool EulerPath_recursive(Package *pkg, const CGraphId from) {
   while (1) {
     if (!getTargetEdge(pkg, from)) return insert(pkg, from);
-    if (!EulerPath_recursive(pkg, pkg->to)) return CGRAPH_FALSE;
+    if (!EulerPath_recursive(pkg, pkg->to)) return false;
     pkg->currTgt = from;
   }
 }
@@ -55,9 +55,9 @@ static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
       continue;
     }
 
-    if (!insert(pkg, from)) return CGRAPH_FALSE;
+    if (!insert(pkg, from)) return false;
 
-    if (cgraphStackEmpty(stack)) return CGRAPH_TRUE; // 结束
+    if (cgraphStackEmpty(stack)) return true;        // 结束
     from = cgraphStackPop(stack);                    // 返回
     pkg->currTgt = from;
   }

@@ -1,11 +1,19 @@
-#include "private/iter_internal.h"
-#include "private/structure/queue.h"
+#include "internal/developer.h"
+#include "struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 
-void cgraphIndegreeInit(const CGraphView *view, const CGraphInt indegree[],
-                        CGraphQueue *queue);
+static void callback(CGraphId from, CGraphId eid, CGraphId to, void *userdata) {
+  const CGraphInt *indegree = *(void **)userdata;
+  CGraphQueue *queue = *((void **)userdata + 1);
+  if (indegree[to] == 0) cgraphQueuePush(queue, to);
+}
 
+static void indegreeInitQueue(const CGraphView *view,
+                              const CGraphInt indegree[], CGraphQueue *queue) {
+  void *userData[] = {(void *)indegree, queue};
+  cgraphEdgeTraverseV(view, userData, callback);
+}
 typedef struct {
   CGraphIter *iter;
   CGraphQueue *queue;
@@ -51,7 +59,7 @@ static void init(Package *pkg, const CGraphView *view,
 
   pkg->iter = cgraphIterFromView(view);
   pkg->queue = cgraphQueueCreate(vertRange);
-  cgraphIndegreeInit(view, pkg->indegree, pkg->queue);
+  indegreeInitQueue(view, pkg->indegree, pkg->queue);
   pkg->indegree = malloc(vertRange * sizeof(CGraphInt));
   memcpy(pkg->indegree, indegree, vertRange * sizeof(CGraphInt));
   memset(pkg->earlyStart, 0, vertRange * sizeof(TimeType));

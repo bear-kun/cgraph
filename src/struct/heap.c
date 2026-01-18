@@ -1,4 +1,4 @@
-#include "private/structure/heap.h"
+#include "struct/heap.h"
 #include <stdlib.h>
 
 static void graphHeapifyDown(CGraphHeap *heap, CGraphSize father) {
@@ -19,7 +19,8 @@ static void graphHeapifyDown(CGraphHeap *heap, CGraphSize father) {
 
 CGraphHeap *cgraphHeapCreate(const CGraphSize capacity,
                              const WeightType *weights) {
-  CGraphHeap *heap = malloc(sizeof(CGraphHeap) + capacity * sizeof(CGraphId));
+  CGraphHeap *heap =
+      malloc(sizeof(CGraphHeap) + (capacity + 1) * sizeof(CGraphId));
   heap->capacity = capacity;
   heap->size = 0;
   heap->weights = weights;

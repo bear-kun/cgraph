@@ -1,6 +1,5 @@
-#include "private/iter_internal.h"
-#include "private/structure/queue.h"
-#include "private/view.h"
+#include "internal/developer.h"
+#include "struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,16 +27,16 @@ static CGraphBool bfs(const Package *pkg, CGraphQueue *const queue) {
     const CGraphId from = cgraphQueuePop(queue);
 
     while (cgraphIterNextDirect(pkg->iter, from, &did)) {
-      parseForward(pkg->residual, did, &eid, &to);
+      cgraphIterParseF(pkg->residual, did, &eid, &to);
       if (pkg->pred[to] != INVALID_ID || to == pkg->src) continue;
 
       pkg->pred[to] = did;
 
-      if (to == pkg->sink) return CGRAPH_TRUE;
+      if (to == pkg->sink) return true;
       cgraphQueuePush(queue, to);
     }
   }
-  return CGRAPH_FALSE;
+  return false;
 }
 
 // 寻找路径可调整的flow = min(capacity - flow)
@@ -46,7 +45,7 @@ static FlowType pathFlow(const Package *pkg) {
   CGraphId eid, from;
   for (CGraphId did = pkg->pred[pkg->sink]; did != INVALID_ID;
        did = pkg->pred[from]) {
-    parseBackward(pkg->residual, did, &eid, &from);
+    cgraphIterParseB(pkg->residual, did, &eid, &from);
     if (flow > pkg->cap[eid] - pkg->curr[eid]) {
       flow = pkg->cap[eid] - pkg->curr[eid];
     }
@@ -65,7 +64,7 @@ static void reverse(const CGraphView *const residual, const CGraphId did,
 static void update(const Package *pkg, const FlowType step) {
   CGraphId eid, from, to = pkg->sink;
   for (CGraphId did = pkg->pred[to]; did != INVALID_ID; did = pkg->pred[from]) {
-    parseBackward(pkg->residual, did, &eid, &from);
+    cgraphIterParseB(pkg->residual, did, &eid, &from);
     pkg->curr[eid] += step;
 
     // 如果edge是正向的，则flow的增加是同向的；否则相反
@@ -89,7 +88,7 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
                                   const FlowType capacity[], FlowType flow[],
                                   const CGraphId source, const CGraphId sink) {
   const CGraphView *view = VIEW(network);
-  CGraphView *residual = cgraphViewReserveEdge(view, CGRAPH_FALSE);
+  CGraphView *residual = cgraphViewReserveEdge(view, false);
   cgraphViewCopyEdge(view, residual);
 
   CGraphIter *iter = cgraphIterFromView(residual);

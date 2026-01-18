@@ -1,4 +1,4 @@
-#include "private/structure/disjoint_set.h"
+#include "struct/disjoint_set.h"
 #include <stdlib.h>
 #include <string.h>
 

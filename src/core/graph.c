@@ -1,5 +1,4 @@
-#include "private/view.h"
-#include "private/iter_internal.h"
+#include "internal/developer.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,7 +22,7 @@ void cgraphInit(CGraph *const graph, const CGraphBool directed,
   view->edgeRange = 0;
   view->edgeHead = malloc(vertCap * sizeof(CGraphId));
   memset(view->edgeHead, INVALID_ID, vertCap * sizeof(CGraphId));
-  view->endpts = malloc(edgeCap * sizeof(CGraphEndpoint));
+  view->endpoints = malloc(edgeCap * sizeof(CGraphEndpoint));
 
   if (directed) {
     view->edgeNext = malloc(edgeCap * sizeof(CGraphId));
@@ -32,8 +31,7 @@ void cgraphInit(CGraph *const graph, const CGraphBool directed,
   } else {
     view->edgeNext = malloc(2 * edgeCap * sizeof(CGraphId));
     view->edgeNext[2 * (edgeCap - 1)] = INVALID_ID;
-    for (CGraphId i = 2 * ((CGraphId)edgeCap - 1); i;
-         i -= 2)
+    for (CGraphId i = 2 * ((CGraphId)edgeCap - 1); i; i -= 2)
       view->edgeNext[i - 2] = i;
   }
 }
@@ -43,7 +41,7 @@ void cgraphDestroy(const CGraph *const graph) {
   free(view->vertNext);
   free(view->edgeHead);
   free(view->edgeNext);
-  free(view->endpts);
+  free(view->endpoints);
 }
 
 CGraphId cgraphAddVert(CGraph *const graph) {
@@ -79,7 +77,7 @@ CGraphId cgraphAddEdge(CGraph *const graph, const CGraphId from,
   if (!directed) cgraphInsertEdge(view, to, REVERSE(did));
 
   const CGraphId eid = view->directed ? did : (did >> 1);
-  view->endpts[eid] = (CGraphEndpoint){.to = to, .from = from};
+  view->endpoints[eid] = (CGraphEndpoint){.to = to, .from = from};
   if (eid == view->edgeRange) ++view->edgeRange;
   ++graph->edgeNum;
   return eid;
@@ -97,8 +95,8 @@ void cgraphDeleteVert(CGraph *graph, const CGraphId vid) {
 void cgraphDeleteEdge(CGraph *graph, const CGraphId eid) {
   CGraphView *view = VIEW(graph);
   const CGraphId did = view->directed ? eid : (eid << 1);
-  const CGraphId to = view->endpts[eid].to;
-  const CGraphId from = view->endpts[eid].from;
+  const CGraphId to = view->endpoints[eid].to;
+  const CGraphId from = view->endpoints[eid].from;
 
   CGraphId *predNext = cgraphFind(view->edgeNext, view->edgeHead + from, did);
   cgraphUnlink(view->edgeNext, predNext);
@@ -111,13 +109,21 @@ void cgraphDeleteEdge(CGraph *graph, const CGraphId eid) {
   --graph->edgeNum;
 }
 
-void cgraphGetIdRange(const CGraph *graph, CGraphSize *vert, CGraphSize *edge) {
-  if (vert) *vert = graph->view.vertRange;
-  if (edge) *edge = graph->view.edgeRange;
+void cgraphEdgeTraverseV(const CGraphView *view, void *userData,
+                         void (*callback)(CGraphId, CGraphId, CGraphId,
+                                          void *)) {
+  for (CGraphId from = view->vertHead; from != INVALID_ID;
+       from = view->vertNext[from]) {
+    for (CGraphId did_ = view->edgeHead[from], eid, to; did_ != INVALID_ID;
+         did_ = view->edgeNext[did_]) {
+      cgraphIterParseF(view, did_, &eid, &to);
+      callback(from, eid, to, userData);
+    }
+  }
 }
 
-void cgraphGetIndegree(const CGraph *const graph, CGraphInt indegree[]) {
-  const CGraphView *view = VIEW(graph);
-  memset(indegree, 0, view->vertRange * sizeof(CGraphInt));
-  FOREACH_EDGE(view, from, eid, to) { ++indegree[to]; }
+void cgraphEdgeTraverse(const CGraph *graph, void *userData,
+                        void (*callback)(CGraphId, CGraphId, CGraphId,
+                                         void *)) {
+  cgraphEdgeTraverseV(VIEW(graph), userData, callback);
 }

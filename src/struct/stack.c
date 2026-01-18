@@ -1,4 +1,4 @@
-#include "private/structure/stack.h"
+#include "struct/stack.h"
 #include <stdlib.h>
 
 CGraphStack *cgraphStackCreate(const CGraphSize capacity) {

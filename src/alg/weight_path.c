@@ -1,6 +1,6 @@
-#include "private/iter_internal.h"
-#include "private/structure/pairing_heap.h"
-#include "private/structure/queue.h"
+#include "internal/developer.h"
+#include "struct/pairing_heap.h"
+#include "struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -64,7 +64,7 @@ void cgraphShortestBellmanFord(const CGraph *const graph,
   cgraphQueuePush(queue, source);
   while (!cgraphQueueEmpty(queue)) {
     const CGraphId from = cgraphQueuePop(queue);
-    isInQueue[from] = CGRAPH_FALSE;
+    isInQueue[from] = false;
 
     while (cgraphIterNextEdge(iter, from, &eid, &to)) {
       if (distance[to] <= distance[from] + weights[eid]) continue;
@@ -75,7 +75,7 @@ void cgraphShortestBellmanFord(const CGraph *const graph,
       if (!isInQueue[to]) {
         cgraphQueuePush(queue, to);
         cgraphIterResetEdge(iter, to);
-        isInQueue[to] = CGRAPH_TRUE;
+        isInQueue[to] = true;
       }
     }
   }

@@ -1,6 +1,5 @@
-#include "private/iter_internal.h"
-#include "private/structure/stack.h"
-#include "private/view.h"
+#include "internal/developer.h"
+#include "struct/stack.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,7 +16,7 @@ static void forward(Package *pkg, const CGraphId from) {
   CGraphId did, eid, to;
   pkg->flag[from] = 1;
   while (cgraphIterNextDirect(pkg->iter, from, &did)) {
-    parseForward(pkg->iter->view, did, &eid, &to);
+    cgraphIterParseF(pkg->iter->view, did, &eid, &to);
     if (!pkg->flag[to]) forward(pkg, to);
     cgraphInsertEdge(pkg->reverse, to, REVERSE(did)); // 边转向
   }
@@ -36,7 +35,7 @@ static void backward(Package *pkg, const CGraphId from) {
 void cgraphFindScc(const CGraph *graph, CGraphId connectionId[]) {
   const CGraphView *view = VIEW(graph);
   CGraphIter *iter = cgraphIterFromView(view);
-  CGraphView *reverse = cgraphViewReserveEdge(view, CGRAPH_TRUE);
+  CGraphView *reverse = cgraphViewReserveEdge(view, true);
   CGraphStack *stack = cgraphStackCreate(graph->vertNum);
   CGraphBool *flag = calloc(view->vertRange, sizeof(CGraphBool));
   Package pkg = {iter, reverse, stack, flag, connectionId, 0};

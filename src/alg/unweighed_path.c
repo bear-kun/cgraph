@@ -1,5 +1,5 @@
-#include "private/iter_internal.h"
-#include "private/structure/queue.h"
+#include "internal/developer.h"
+#include "struct/queue.h"
 #include <string.h>
 
 void cgraphUnweightedShortest(const CGraph *const graph, CGraphId predecessor[],

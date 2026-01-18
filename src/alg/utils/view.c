@@ -1,4 +1,4 @@
-#include "private/view.h"
+#include "internal/developer.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,7 +18,7 @@ CGraphView *cgraphViewReserveEdge(const CGraphView *view,
   copy->edgeRange = view->edgeRange;
   copy->edgeHead = (CGraphId *)(buff + sizeof(CGraphView));
   copy->edgeNext = copy->edgeHead + view->vertRange;
-  copy->endpts = view->endpts;
+  copy->endpoints = view->endpoints;
   return copy;
 }
 

@@ -1,13 +1,12 @@
 #ifndef HEAP_H
 #define HEAP_H
 
-#include "cgraph/type.h"
+#include "../type.h"
 
 typedef struct {
   CGraphSize capacity, size;
   const WeightType *weights;
-  CGraphId elems[1];
-  // CGraphId dummy;
+  CGraphId elems[];
 } CGraphHeap;
 
 CGraphHeap *cgraphHeapCreate(CGraphSize capacity, const WeightType *weights);

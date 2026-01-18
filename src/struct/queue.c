@@ -1,4 +1,4 @@
-#include "private/structure/queue.h"
+#include "struct/queue.h"
 #include <stdlib.h>
 
 CGraphQueue *cgraphQueueCreate(const CGraphSize capacity) {

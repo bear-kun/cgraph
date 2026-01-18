@@ -1,5 +1,5 @@
-#include "cgraph/linked_list.h"
-#include "private/iter_internal.h"
+#include "internal/developer.h"
+#include "struct/linked_list.h"
 #include <stdlib.h>
 
 typedef struct VertexAttribute_ Vertex;
@@ -20,7 +20,7 @@ typedef struct {
 static void findArticulationStep(Package *pkg, const CGraphId from) {
   // 排除根节点，单独处理
   Vertex *vertex = pkg->vertices + from;
-  CGraphBool isArt = vertex->pred != NULL ? CGRAPH_TRUE : CGRAPH_FALSE;
+  CGraphBool isArt = vertex->pred != NULL;
   CGraphId eid, to;
 
   vertex->visited = 1;

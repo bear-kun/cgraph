@@ -1,7 +1,8 @@
 #ifndef GRAPH_ALG_H
 #define GRAPH_ALG_H
 
-#include "cgraph/type.h"
+#include "type.h"
+#include "struct/linked_list.h"
 
 void cgraphCriticalPath(const CGraph *aoa, const CGraphInt indegree[],
                         const TimeType duration[], CGraphId successor[],
@@ -55,5 +56,10 @@ void cgraphShortestDijkstra(const CGraph *graph, const WeightType weights[],
 
 void cgraphShortestBellmanFord(const CGraph *graph, const WeightType weights[],
                                CGraphId predecessor[], CGraphId source);
+
+// matrix
+// 不限正负权值
+void FloydWarshallWeightedPath(WeightType **weight, CGraphSize vertNum,
+                               CGraphId **path, WeightType **distance);
 
 #endif // GRAPH_ALG_H

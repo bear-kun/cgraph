@@ -1,7 +1,7 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "cgraph/type.h"
+#include "../type.h"
 
 typedef struct {
   CGraphSize capacity, size;
