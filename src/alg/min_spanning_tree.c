@@ -57,7 +57,7 @@ static void callback(CGraphId from, CGraphId eid, CGraphId to, void *userData) {
 static void KruskalHeapInit(const CGraphView *view, CGraphHeap *heap) {
   CGraphBool *isInHeap = calloc(view->edgeRange, sizeof(CGraphBool));
   void *userData[] = {heap, isInHeap};
-  cgraphEdgeTraverseV(view, userData, callback);
+  cgraphTraverseEdgeV(view, userData, callback);
   free(isInHeap);
   cgraphHeapBuild(heap);
 }

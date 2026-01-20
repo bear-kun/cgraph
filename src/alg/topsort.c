@@ -12,7 +12,7 @@ static void callback(CGraphId from, CGraphId eid, CGraphId to, void *userdata) {
 static void indegreeInitQueue(const CGraphView *view,
                               const CGraphInt indegree[], CGraphQueue *queue) {
   void *userData[] = {(void *)indegree, queue};
-  cgraphEdgeTraverseV(view, userData, callback);
+  cgraphTraverseEdgeV(view, userData, callback);
 }
 
 void cgraphTopoPath(const CGraph *const graph, const CGraphInt indegree[],

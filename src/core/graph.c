@@ -1,3 +1,4 @@
+#include "graph.h"
 #include "internal/developer.h"
 #include <stdlib.h>
 #include <string.h>
@@ -29,8 +30,7 @@ void cgraphInit(CGraph *const graph, const CGraphBool directed,
     for (CGraphId i = 0; i < edgeCap; i++) view->edgeNext[i] = i + 1;
   } else {
     view->edgeNext = malloc(2 * edgeCap * sizeof(CGraphId));
-    for (CGraphId i = 0; i < edgeCap; i++)
-      view->edgeNext[2 * i] = 2 * (i + 1);
+    for (CGraphId i = 0; i < edgeCap; i++) view->edgeNext[2 * i] = 2 * (i + 1);
   }
 }
 
@@ -141,6 +141,53 @@ void cgraphDeleteEdge(CGraph *graph, const CGraphId eid) {
   --graph->edgeNum;
 }
 
+CGraphId cgraphFindEdgeId(const CGraph *graph, const CGraphId from,
+                          const CGraphId to) {
+  const CGraphView *view = VIEW(graph);
+  for (CGraphId eid = view->edgeHead[from]; eid != INVALID_ID;
+       eid = view->edgeNext[eid]) {
+    if (view->endpoints[eid].to == to) return eid;
+    if (!view->directed && view->endpoints[eid].from == from) return eid;
+  }
+  return INVALID_ID;
+}
+
+void cgraphParseEdgeId(const CGraph *graph, const CGraphId eid, CGraphId *from,
+                       CGraphId *to) {
+  const CGraphView *view = VIEW(graph);
+  const CGraphEndpoint endpoint = view->endpoints[eid];
+  *from = endpoint.from;
+  *to = endpoint.to;
+}
+
+void cgraphTraverseEdgeV(const CGraphView *view, void *userData,
+                         void (*callback)(CGraphId, CGraphId, CGraphId,
+                                          void *)) {
+  for (CGraphId from = view->vertHead; from != INVALID_ID;
+       from = view->vertNext[from]) {
+    for (CGraphId did = view->edgeHead[from], eid, to; did != INVALID_ID;
+         did = view->edgeNext[did]) {
+      cgraphIterParseF(view, did, &eid, &to);
+      callback(from, eid, to, userData);
+    }
+  }
+}
+
+void cgraphTraverseEdge(const CGraph *graph, void *userData,
+                        void (*callback)(CGraphId, CGraphId, CGraphId,
+                                         void *)) {
+  cgraphTraverseEdgeV(VIEW(graph), userData, callback);
+}
+
+void cgraphSetVertResizeCallback(CGraph *graph,
+                                 const CGraphResizeCallback callback) {
+  graph->vertResize = callback;
+}
+void cgraphSetEdgeResizeCallback(CGraph *graph,
+                                 const CGraphResizeCallback callback) {
+  graph->edgeResize = callback;
+}
+
 void cgraphCopyEdgeV(const CGraphView *view, const CGraphView *copy) {
   switch (view->directed << 1 | copy->directed) {
   case 3:
@@ -160,32 +207,4 @@ void cgraphCopyEdgeV(const CGraphView *view, const CGraphView *copy) {
     break;
   default:;
   }
-}
-
-void cgraphEdgeTraverseV(const CGraphView *view, void *userData,
-                         void (*callback)(CGraphId, CGraphId, CGraphId,
-                                          void *)) {
-  for (CGraphId from = view->vertHead; from != INVALID_ID;
-       from = view->vertNext[from]) {
-    for (CGraphId did_ = view->edgeHead[from], eid, to; did_ != INVALID_ID;
-         did_ = view->edgeNext[did_]) {
-      cgraphIterParseF(view, did_, &eid, &to);
-      callback(from, eid, to, userData);
-    }
-  }
-}
-
-void cgraphEdgeTraverse(const CGraph *graph, void *userData,
-                        void (*callback)(CGraphId, CGraphId, CGraphId,
-                                         void *)) {
-  cgraphEdgeTraverseV(VIEW(graph), userData, callback);
-}
-
-void cgraphSetVertResizeCallback(CGraph *graph,
-                                 const CGraphResizeCallback callback) {
-  graph->vertResize = callback;
-}
-void cgraphSetEdgeResizeCallback(CGraph *graph,
-                                 const CGraphResizeCallback callback) {
-  graph->edgeResize = callback;
 }

@@ -15,7 +15,7 @@ void cgraphIterParseB(const CGraphView *view, CGraphId did, CGraphId *eid, CGrap
 CGraphBool cgraphIterNextDirect(CGraphIter *iter, CGraphId from, CGraphId *did);
 
 void cgraphCopyEdgeV(const CGraphView *view, const CGraphView *copy);
-void cgraphEdgeTraverseV(const CGraphView *view, void *userData,
+void cgraphTraverseEdgeV(const CGraphView *view, void *userData,
                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
 
 CGraphId *cgraphFind(CGraphId *next, CGraphId *head, CGraphId id);

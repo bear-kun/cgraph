@@ -1,3 +1,4 @@
+#include "iter.h"
 #include "internal/developer.h"
 #include <stdlib.h>
 #include <string.h>
