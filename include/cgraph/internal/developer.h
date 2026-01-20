@@ -14,17 +14,11 @@ void cgraphIterParseF(const CGraphView *view, CGraphId did, CGraphId *eid, CGrap
 void cgraphIterParseB(const CGraphView *view, CGraphId did, CGraphId *eid, CGraphId *from);
 CGraphBool cgraphIterNextDirect(CGraphIter *iter, CGraphId from, CGraphId *did);
 
-CGraphView *cgraphViewReserveEdge(const CGraphView *view, CGraphBool directed);
-void cgraphViewCopyEdge(const CGraphView *view, const CGraphView *copy);
+void cgraphCopyEdgeV(const CGraphView *view, const CGraphView *copy);
 void cgraphEdgeTraverseV(const CGraphView *view, void *userData,
                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
 
-static CGraphId *cgraphFind(CGraphId *next, CGraphId *head, const CGraphId id) {
-  CGraphId *predNext = head;
-  while (*predNext != INVALID_ID && *predNext != id)
-    predNext = next + *predNext;
-  return *predNext == INVALID_ID ? 0 : predNext;
-}
+CGraphId *cgraphFind(CGraphId *next, CGraphId *head, CGraphId id);
 
 static inline void cgraphUnlink(const CGraphId *next, CGraphId *predNext) {
   *predNext = next[*predNext];

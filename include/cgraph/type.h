@@ -12,6 +12,8 @@ typedef int64_t WeightType;
 typedef WeightType TimeType; // aoa
 typedef WeightType FlowType; // flow
 
+typedef void (*CGraphResizeCallback)(CGraphSize);
+
 typedef struct {
   CGraphId to, from;
 } CGraphEndpoint;
@@ -31,6 +33,7 @@ typedef struct {
   CGraphSize vertCap, edgeCap;
   CGraphSize vertNum, edgeNum;
   CGraphId vertFree, edgeFree;
+  CGraphResizeCallback vertResize, edgeResize;
   CGraphView view;
 } CGraph;
 

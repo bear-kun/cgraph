@@ -12,6 +12,16 @@ typedef struct {
   CGraphId counter;
 } Package;
 
+static CGraphView *viewReserveEdge(const CGraphView *view) {
+  char *mem = malloc(sizeof(CGraphView) +
+                     (view->vertRange + view->edgeRange) * sizeof(CGraphId));
+  CGraphView *copy = (CGraphView *)mem;
+  *copy = *view;
+  copy->edgeHead = (CGraphId *)(mem + sizeof(CGraphView));
+  copy->edgeNext = copy->edgeHead + view->vertRange;
+  return copy;
+}
+
 static void forward(Package *pkg, const CGraphId from) {
   CGraphId did, eid, to;
   pkg->flag[from] = 1;
@@ -35,7 +45,7 @@ static void backward(Package *pkg, const CGraphId from) {
 void cgraphFindScc(const CGraph *graph, CGraphId connectionId[]) {
   const CGraphView *view = VIEW(graph);
   CGraphIter *iter = cgraphIterFromView(view);
-  CGraphView *reverse = cgraphViewReserveEdge(view, true);
+  CGraphView *reverse = viewReserveEdge(view);
   CGraphStack *stack = cgraphStackCreate(graph->vertNum);
   CGraphBool *flag = calloc(view->vertRange, sizeof(CGraphBool));
   Package pkg = {iter, reverse, stack, flag, connectionId, 0};

@@ -13,6 +13,18 @@ typedef struct {
   FlowType *flow;
 } Package;
 
+static CGraphView *viewReserveEdgeU(const CGraphView *view) {
+  char *mem =
+      malloc(sizeof(CGraphView) +
+             (view->vertRange + 2 * view->edgeRange) * sizeof(CGraphId));
+  CGraphView *copy = (CGraphView *)mem;
+  *copy = *view;
+  copy->directed = false;
+  copy->edgeHead = (CGraphId *)(mem + sizeof(CGraphView));
+  copy->edgeNext = copy->edgeHead + view->vertRange;
+  return copy;
+}
+
 /*
  * 广度优先搜索寻找最短路径，
  * 之所以不用贪心寻找可扩容最大的边，
@@ -88,8 +100,8 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
                                   const FlowType capacity[], FlowType flow[],
                                   const CGraphId source, const CGraphId sink) {
   const CGraphView *view = VIEW(network);
-  CGraphView *residual = cgraphViewReserveEdge(view, false);
-  cgraphViewCopyEdge(view, residual);
+  CGraphView *residual = viewReserveEdgeU(view);
+  cgraphCopyEdgeV(view, residual);
 
   CGraphIter *iter = cgraphIterFromView(residual);
   CGraphQueue *queue = cgraphQueueCreate(network->vertNum);
