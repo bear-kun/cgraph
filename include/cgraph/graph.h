@@ -11,13 +11,15 @@ CGraphId cgraphAddEdge(CGraph *graph, CGraphId from, CGraphId to, CGraphBool dir
 void cgraphReserveVert(CGraph *graph, CGraphSize num);
 void cgraphDeleteVert(CGraph *graph, CGraphId vid);
 void cgraphDeleteEdge(CGraph *graph, CGraphId eid);
+void cgraphClearEdges(CGraph *graph);
+void cgraphClear(CGraph *graph);
 CGraphId cgraphFindEdgeId(const CGraph *graph, CGraphId from, CGraphId to);
 void cgraphParseEdgeId(const CGraph *graph, CGraphId eid, CGraphId *from, CGraphId *to);
 
 void cgraphSetVertResizeCallback(CGraph *graph, CGraphResizeCallback callback);
 void cgraphSetEdgeResizeCallback(CGraph *graph, CGraphResizeCallback callback);
 
-void cgraphTraverseEdge(const CGraph *graph, void *userData,
-                        void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
+void cgraphTraverseEdges(const CGraph *graph, void *userData,
+                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
 
 #endif // GRAPH_GRAPH_H

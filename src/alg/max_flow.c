@@ -13,16 +13,21 @@ typedef struct {
   FlowType *flow;
 } Package;
 
-static CGraphView *viewReserveEdgeU(const CGraphView *view) {
+static CGraphView *buildResidualNetwork(const CGraphView *src) {
   char *mem =
       malloc(sizeof(CGraphView) +
-             (view->vertRange + 2 * view->edgeRange) * sizeof(CGraphId));
-  CGraphView *copy = (CGraphView *)mem;
-  *copy = *view;
-  copy->directed = false;
-  copy->edgeHead = (CGraphId *)(mem + sizeof(CGraphView));
-  copy->edgeNext = copy->edgeHead + view->vertRange;
-  return copy;
+             (src->vertRange + 2 * src->edgeRange) * sizeof(CGraphId));
+  CGraphView *residual = (CGraphView *)mem;
+  *residual = *src;
+  residual->directed = false;
+  residual->edgeHead = (CGraphId *)(mem + sizeof(CGraphView));
+  residual->edgeNext = residual->edgeHead + src->vertRange;
+
+  for (CGraphSize i = 0; i < residual->vertRange; ++i)
+    residual->edgeHead[i] = DID(src->edgeHead[i]);
+  for (CGraphSize i = 0; i < residual->edgeRange; ++i)
+    residual->edgeNext[i << 1] = DID(src->edgeNext[i]);
+  return residual;
 }
 
 /*
@@ -100,8 +105,7 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
                                   const FlowType capacity[], FlowType flow[],
                                   const CGraphId source, const CGraphId sink) {
   const CGraphView *view = VIEW(network);
-  CGraphView *residual = viewReserveEdgeU(view);
-  cgraphCopyEdgeV(view, residual);
+  CGraphView *residual = buildResidualNetwork(view);
 
   CGraphIter *iter = cgraphIterFromView(residual);
   CGraphQueue *queue = cgraphQueueCreate(network->vertNum);

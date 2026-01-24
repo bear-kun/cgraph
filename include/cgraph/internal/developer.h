@@ -7,6 +7,7 @@
 #define UNREACHABLE 0x7f7f7f7f7f7f7f7f
 #define UNREACHABLE_BYTE 0x7f
 #define REVERSE(did) ((did) ^ 1)
+#define DID(eid) ((eid) << 1 | (eid) >> (sizeof(CGraphId) * 8 - 1))
 #define VIEW(graph) (&(graph)->view)
 
 CGraphIter *cgraphIterFromView(const CGraphView *view);
@@ -14,7 +15,6 @@ void cgraphIterParseF(const CGraphView *view, CGraphId did, CGraphId *eid, CGrap
 void cgraphIterParseB(const CGraphView *view, CGraphId did, CGraphId *eid, CGraphId *from);
 CGraphBool cgraphIterNextDirect(CGraphIter *iter, CGraphId from, CGraphId *did);
 
-void cgraphCopyEdgeV(const CGraphView *view, const CGraphView *copy);
 void cgraphTraverseEdgeV(const CGraphView *view, void *userData,
                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
 
