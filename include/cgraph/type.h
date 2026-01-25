@@ -12,7 +12,7 @@ typedef int64_t WeightType;
 typedef WeightType TimeType; // aoa
 typedef WeightType FlowType; // flow
 
-typedef void (*CGraphResizeCallback)(CGraphSize);
+typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 
 typedef struct {
   CGraphId to, from;

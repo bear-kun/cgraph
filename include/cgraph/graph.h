@@ -8,6 +8,7 @@ void cgraphRelease(const CGraph *graph);
 
 CGraphId cgraphAddVert(CGraph *graph);
 CGraphId cgraphAddEdge(CGraph *graph, CGraphId from, CGraphId to, CGraphBool directed);
+CGraphId cgraphPushEdgeBack(CGraph * graph, CGraphId from, CGraphId to);
 void cgraphReserveVert(CGraph *graph, CGraphSize num);
 void cgraphDeleteVert(CGraph *graph, CGraphId vid);
 void cgraphDeleteEdge(CGraph *graph, CGraphId eid);
