@@ -149,13 +149,15 @@ CGraphId *cgraphFind(CGraphId *next, CGraphId *head, const CGraphId id) {
   return predNext;
 }
 
-CGraphId cgraphPushEdgeBack(CGraph *const graph, const CGraphId from, const CGraphId to) {
+CGraphId cgraphPushEdgeBack(CGraph *const graph, const CGraphId from,
+                            const CGraphId to) {
   if (graph->edgeNum == graph->edgeCap) cgraphEdgeResize(graph);
 
   CGraphView *view = VIEW(graph);
   const CGraphId eid = graph->edgeFree;
   cgraphUnlink(view->edgeNext, &graph->edgeFree);
-  CGraphId *back = cgraphFind(view->edgeNext, view->edgeHead + from, INVALID_ID);
+  CGraphId *back =
+      cgraphFind(view->edgeNext, view->edgeHead + from, INVALID_ID);
   cgraphInsert(view->edgeNext, back, eid);
 
   view->endpoints[eid] = (CGraphEndpoint){.to = to, .from = from};
@@ -195,7 +197,8 @@ void cgraphClearEdges(CGraph *graph) {
   const CGraphSize edgeCap = graph->edgeCap;
   CGraphView *view = VIEW(graph);
 
-  view->edgeRange = 0;
+  graph->edgeFree = 0;
+  view->edgeRange = graph->edgeNum = 0;
   memset(view->edgeHead, INVALID_ID, vertCap * sizeof(CGraphId));
 
   if (view->directed) {
@@ -207,7 +210,8 @@ void cgraphClearEdges(CGraph *graph) {
 
 void cgraphClear(CGraph *graph) {
   CGraphView *view = VIEW(graph);
-  view->vertRange = 0;
+  graph->vertFree = 0;
+  view->vertRange = graph->vertNum = 0;
   view->vertHead = INVALID_ID;
   for (CGraphId i = 0; i < graph->vertCap; i++) view->vertNext[i] = i + 1;
   cgraphClearEdges(graph);
