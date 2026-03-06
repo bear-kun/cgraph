@@ -72,9 +72,8 @@ void cgraphMSTKruskal(const CGraph *graph, const WeightType weight[],
   CGraphSize counter = 0;
   while (!cgraphHeapEmpty(heap)) {
     const CGraphId eid = cgraphHeapPop(heap);
-    const CGraphEndpoint *edge = view->endpoints + eid;
-    const CGraphId cls1 = cgraphDisjointFind(disjointSet, edge->to);
-    const CGraphId cls2 = cgraphDisjointFind(disjointSet, edge->from);
+    const CGraphId cls1 = cgraphDisjointFind(disjointSet, view->edgeFrom[eid]);
+    const CGraphId cls2 = cgraphDisjointFind(disjointSet, view->edgeTo[eid]);
 
     if (cls1 != cls2) {
       edges[counter++] = eid;

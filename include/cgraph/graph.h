@@ -14,6 +14,7 @@ void cgraphDeleteVert(CGraph *graph, CGraphId vid);
 void cgraphDeleteEdge(CGraph *graph, CGraphId eid);
 void cgraphClearEdges(CGraph *graph);
 void cgraphClear(CGraph *graph);
+
 CGraphId cgraphFindEdgeId(const CGraph *graph, CGraphId from, CGraphId to);
 void cgraphParseEdgeId(const CGraph *graph, CGraphId eid, CGraphId *from, CGraphId *to);
 

@@ -61,10 +61,10 @@ void cgraphIterParseF(const CGraphView *view, const CGraphId did, CGraphId *eid,
   // 高度重复可预测，保留分支版本
   if (view->directed) {
     *eid = did;
-    *to = view->endpoints[did].to;
+    *to = view->edgeTo[did];
   } else {
     *eid = did >> 1;
-    *to = ((CGraphId *)view->endpoints)[did];
+    *to = (did & 1 ? view->edgeFrom : view->edgeTo)[*eid];
   }
 }
 
@@ -72,10 +72,10 @@ void cgraphIterParseB(const CGraphView *view, const CGraphId did, CGraphId *eid,
                       CGraphId *from) {
   if (view->directed) {
     *eid = did;
-    *from = view->endpoints[did].from;
+    *from = view->edgeFrom[did];
   } else {
     *eid = did >> 1;
-    *from = ((CGraphId *)view->endpoints)[REVERSE(did)];
+    *from = (did & 1 ? view->edgeTo : view->edgeFrom)[*eid];
   }
 }
 

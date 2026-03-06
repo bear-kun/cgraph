@@ -14,7 +14,7 @@ typedef struct {
 } Package;
 
 static CGraphView *buildResidualNetwork(const CGraphView *src) {
-  char *mem =
+  int8_t *mem =
       malloc(sizeof(CGraphView) +
              (src->vertRange + 2 * src->edgeRange) * sizeof(CGraphId));
   CGraphView *residual = (CGraphView *)mem;
@@ -23,10 +23,12 @@ static CGraphView *buildResidualNetwork(const CGraphView *src) {
   residual->edgeHead = (CGraphId *)(mem + sizeof(CGraphView));
   residual->edgeNext = residual->edgeHead + src->vertRange;
 
-  for (CGraphSize i = 0; i < residual->vertRange; ++i)
+  for (CGraphSize i = 0; i < residual->vertRange; ++i) {
     residual->edgeHead[i] = DID(src->edgeHead[i]);
-  for (CGraphSize i = 0; i < residual->edgeRange; ++i)
+  }
+  for (CGraphSize i = 0; i < residual->edgeRange; ++i) {
     residual->edgeNext[i << 1] = DID(src->edgeNext[i]);
+  }
   return residual;
 }
 

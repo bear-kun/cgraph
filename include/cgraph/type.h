@@ -14,10 +14,6 @@ typedef WeightType FlowType; // flow
 
 typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 
-typedef struct {
-  CGraphId to, from;
-} CGraphEndpoint;
-
 // 最小图结构
 typedef struct {
   CGraphSize vertRange;
@@ -26,7 +22,7 @@ typedef struct {
   CGraphBool directed;
   CGraphSize edgeRange;
   CGraphId *edgeHead, *edgeNext;
-  CGraphEndpoint *endpoints;
+  CGraphId *edgeFrom, *edgeTo;
 } CGraphView;
 
 typedef struct {
