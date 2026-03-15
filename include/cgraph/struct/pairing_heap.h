@@ -4,19 +4,19 @@
 #include "../type.h"
 
 // 视作只有右子树符合约定的搜索二叉树
-typedef struct PairingHeapNode_ PairingHeapNode_;
+typedef struct PairingHeapNode_ PairingHeapNode;
 struct PairingHeapNode_ {
   WeightType weight;
-  PairingHeapNode_ *left;  // sibling
-  PairingHeapNode_ *right; // child
-  PairingHeapNode_ **parent;
+  PairingHeapNode *left;  // sibling
+  PairingHeapNode *right; // child
+  PairingHeapNode **parent;
 };
 
 typedef struct {
   const WeightType *weights;
-  PairingHeapNode_ *root;
-  PairingHeapNode_ **stack;
-  PairingHeapNode_ nodes[0];
+  PairingHeapNode *root;
+  PairingHeapNode **stack;
+  PairingHeapNode nodes[0];
 } CGraphPairingHeap;
 
 CGraphPairingHeap *cgraphPairingHeapCreate(CGraphSize capacity,

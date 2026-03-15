@@ -7,38 +7,36 @@
 
 void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
                    CGraphId predecessor[], const CGraphId root) {
-  enum { NOT_SEEN = 0, IN_HEAP, DONE };
   const CGraphView *view = VIEW(graph);
   CGraphIter *iter = cgraphIterFromView(view);
-  uint8_t *flags = calloc(view->vertRange, sizeof(uint8_t));
+  CGraphBool *visited = calloc(view->vertRange, sizeof(CGraphBool));
   WeightType *minWeight = malloc(view->vertRange * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vertNum, minWeight);
   memset(minWeight, UNREACHABLE_BYTE, view->vertRange * sizeof(WeightType));
 
-  CGraphId eid, to;
+  visited[root] = true;
   predecessor[root] = INVALID_ID;
   cgraphPairingHeapPush(heap, root);
   while (!cgraphPairingHeapEmpty(heap)) {
     const CGraphId from = cgraphPairingHeapPop(heap);
-    flags[from] = DONE;
 
+    CGraphId eid, to;
     while (cgraphIterNextEdge(iter, from, &eid, &to)) {
-      uint8_t *flag = flags + to;
-      if (*flag != DONE && weights[eid] < minWeight[to]) {
+      if (weights[eid] < minWeight[to]) {
         minWeight[to] = weights[eid];
         predecessor[to] = from;
 
-        if (*flag == IN_HEAP) {
+        if (visited[to]) {
           cgraphPairingHeapPush(heap, to);
         } else {
-          *flag = IN_HEAP;
+          visited[to] = true;
           cgraphPairingHeapUpdate(heap, to);
         }
       }
     }
   }
 
-  free(flags);
+  free(visited);
   free(minWeight);
   cgraphIterRelease(iter);
   cgraphPairingHeapRelease(heap);

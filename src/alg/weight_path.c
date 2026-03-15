@@ -7,40 +7,38 @@
 void cgraphShortestDijkstra(const CGraph *const graph,
                             const WeightType weights[], CGraphId predecessor[],
                             const CGraphId source, const CGraphId target) {
-  enum { NOT_SEEN = 0, IN_HEAP, DONE };
   const CGraphView *view = VIEW(graph);
   CGraphIter *iter = cgraphIterFromView(view);
-  uint8_t *flags = calloc(view->vertRange, sizeof(uint8_t));
+  CGraphBool *visited = calloc(view->vertRange, sizeof(CGraphBool));
   WeightType *distance = malloc(view->vertRange * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vertNum, distance);
   memset(distance, UNREACHABLE_BYTE, view->vertRange * sizeof(WeightType));
   memset(predecessor, INVALID_ID, view->vertRange * sizeof(CGraphId));
 
-  CGraphId eid, to;
+  visited[source] = true;
   distance[source] = 0;
   cgraphPairingHeapPush(heap, source);
   while (!cgraphPairingHeapEmpty(heap)) {
     const CGraphId from = cgraphPairingHeapPop(heap);
     if (from == target) break;
-    flags[from] = DONE;
 
+    CGraphId eid, to;
     while (cgraphIterNextEdge(iter, from, &eid, &to)) {
-      uint8_t *flag = flags + to;
-      if (*flag != DONE && distance[from] + weights[eid] < distance[to]) {
+      if (distance[from] + weights[eid] < distance[to]) {
         distance[to] = distance[from] + weights[eid];
         predecessor[to] = from;
 
-        if (*flag == IN_HEAP) {
+        if (visited[to]) {
           cgraphPairingHeapUpdate(heap, to);
         } else {
-          *flag = IN_HEAP;
+          visited[to] = true;
           cgraphPairingHeapPush(heap, to);
         }
       }
     }
   }
 
-  free(flags);
+  free(visited);
   free(distance);
   cgraphIterRelease(iter);
   cgraphPairingHeapRelease(heap);
@@ -60,7 +58,6 @@ void cgraphShortestBellmanFord(const CGraph *const graph,
 
   CGraphId eid, to;
   distance[source] = 0;
-  // isInQueue[source] = GRAPH_TRUE;
   cgraphQueuePush(queue, source);
   while (!cgraphQueueEmpty(queue)) {
     const CGraphId from = cgraphQueuePop(queue);
