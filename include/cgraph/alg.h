@@ -1,7 +1,7 @@
 #ifndef GRAPH_ALG_H
 #define GRAPH_ALG_H
 
-#include "type.h"
+#include "types.h"
 #include "struct/linked_list.h"
 
 void cgraphCriticalPath(const CGraph *aoa, const CGraphInt indegree[],

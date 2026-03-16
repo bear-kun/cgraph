@@ -1,20 +1,23 @@
 #ifndef GRAPH_GRAPH_H
 #define GRAPH_GRAPH_H
 
-#include "type.h"
+#include "types.h"
 
 void cgraphInit(CGraph *graph, CGraphBool directed, CGraphSize vertCap, CGraphSize edgeCap);
 void cgraphRelease(const CGraph *graph);
-
-CGraphId cgraphAddVert(CGraph *graph);
-CGraphId cgraphAddEdge(CGraph *graph, CGraphId from, CGraphId to, CGraphBool directed);
-CGraphId cgraphPushEdgeBack(CGraph * graph, CGraphId from, CGraphId to);
-void cgraphReserveVert(CGraph *graph, CGraphSize num);
-void cgraphDeleteVert(CGraph *graph, CGraphId vid);
-void cgraphDeleteEdge(CGraph *graph, CGraphId eid);
+void cgraphCopy(CGraph *dst, const CGraph *src);
+void cgraphCopyVert(CGraph *dst, const CGraph *src);
 void cgraphClearEdges(CGraph *graph);
 void cgraphClear(CGraph *graph);
 
+CGraphId cgraphAddVert(CGraph *graph);
+void cgraphReserveVert(CGraph *graph, CGraphSize num);
+void cgraphDeleteVert(CGraph *graph, CGraphId vid);
+
+CGraphId cgraphAddEdge(CGraph *graph, CGraphId from, CGraphId to);
+CGraphId cgraphPushEdgeBack(CGraph * graph, CGraphId from, CGraphId to);
+void cgraphReverseEdge(const CGraph *graph, CGraphId eid);
+void cgraphDeleteEdge(CGraph *graph, CGraphId eid);
 CGraphId cgraphFindEdgeId(const CGraph *graph, CGraphId from, CGraphId to);
 void cgraphParseEdgeId(const CGraph *graph, CGraphId eid, CGraphId *from, CGraphId *to);
 

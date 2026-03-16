@@ -1,7 +1,7 @@
 #ifndef GRAPH_STACK_H
 #define GRAPH_STACK_H
 
-#include "../type.h"
+#include "cgraph/types.h"
 
 typedef struct {
   CGraphSize size;

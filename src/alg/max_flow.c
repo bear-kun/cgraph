@@ -1,36 +1,19 @@
-#include "internal/developer.h"
+#include "cgraph/graph.h"
+#include "cgraph/iter.h"
 #include "struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 
 typedef struct {
+  const CGraph *network;
+  CGraph *residual;
   CGraphId src, sink;
-  CGraphView *residual;
   CGraphIter *iter;
-  CGraphId *pred;
+  CGraphId *pred; // eid
   const FlowType *cap;
   FlowType *curr;
   FlowType *flow;
 } Package;
-
-static CGraphView *buildResidualNetwork(const CGraphView *src) {
-  int8_t *mem =
-      malloc(sizeof(CGraphView) +
-             (src->vertRange + 2 * src->edgeRange) * sizeof(CGraphId));
-  CGraphView *residual = (CGraphView *)mem;
-  *residual = *src;
-  residual->directed = false;
-  residual->edgeHead = (CGraphId *)(mem + sizeof(CGraphView));
-  residual->edgeNext = residual->edgeHead + src->vertRange;
-
-  for (CGraphSize i = 0; i < residual->vertRange; ++i) {
-    residual->edgeHead[i] = DID(src->edgeHead[i]);
-  }
-  for (CGraphSize i = 0; i < residual->edgeRange; ++i) {
-    residual->edgeNext[i << 1] = DID(src->edgeNext[i]);
-  }
-  return residual;
-}
 
 /*
  * 广度优先搜索寻找最短路径，
@@ -39,20 +22,18 @@ static CGraphView *buildResidualNetwork(const CGraphView *src) {
  * 不如最短路径收敛稳定 O(V * E^2)
  */
 static CGraphBool bfs(const Package *pkg, CGraphQueue *const queue) {
-  CGraphId did, eid, to;
   cgraphQueueClear(queue);
   cgraphQueuePush(queue, pkg->src);
   while (!cgraphQueueEmpty(queue)) {
     const CGraphId from = cgraphQueuePop(queue);
 
-    while (cgraphIterNextDirect(pkg->iter, from, &did)) {
-      cgraphIterParseF(pkg->residual, did, &eid, &to);
-      if (pkg->pred[to] != INVALID_ID || to == pkg->src) continue;
-
-      pkg->pred[to] = did;
-
-      if (to == pkg->sink) return true;
-      cgraphQueuePush(queue, to);
+    CGraphId eid, to;
+    while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
+      if (to != pkg->src && pkg->pred[to] == INVALID_ID) {
+        pkg->pred[to] = eid;
+        if (to == pkg->sink) return true;
+        cgraphQueuePush(queue, to);
+      }
     }
   }
   return false;
@@ -60,67 +41,63 @@ static CGraphBool bfs(const Package *pkg, CGraphQueue *const queue) {
 
 // 寻找路径可调整的flow = min(capacity - flow)
 static FlowType pathFlow(const Package *pkg) {
-  FlowType flow = UNREACHABLE;
-  CGraphId eid, from;
-  for (CGraphId did = pkg->pred[pkg->sink]; did != INVALID_ID;
-       did = pkg->pred[from]) {
-    cgraphIterParseB(pkg->residual, did, &eid, &from);
+  FlowType flow = CGRAPH_INF;
+  CGraphId eid = pkg->pred[pkg->sink];
+  while (eid != INVALID_ID) {
+    CGraphId from;
+    cgraphParseEdgeId(pkg->residual, eid, &from, NULL);
     if (flow > pkg->cap[eid] - pkg->curr[eid]) {
       flow = pkg->cap[eid] - pkg->curr[eid];
     }
+    eid = pkg->pred[from];
   }
   return flow;
 }
 
-static void reverse(const CGraphView *const residual, const CGraphId did,
-                    const CGraphId from, const CGraphId to) {
-  CGraphId *predNext =
-      cgraphFind(residual->edgeNext, residual->edgeHead + from, did);
-  cgraphUnlink(residual->edgeNext, predNext);
-  cgraphInsertEdge(residual, to, REVERSE(did));
-}
-
 static void update(const Package *pkg, const FlowType step) {
-  CGraphId eid, from, to = pkg->sink;
-  for (CGraphId did = pkg->pred[to]; did != INVALID_ID; did = pkg->pred[from]) {
-    cgraphIterParseB(pkg->residual, did, &eid, &from);
-    pkg->curr[eid] += step;
+  CGraphId eid = pkg->pred[pkg->sink];
+  while (eid != INVALID_ID) {
+    CGraphId networkFrom, residualFrom;
+    cgraphParseEdgeId(pkg->network, eid, &networkFrom, NULL);
+    cgraphParseEdgeId(pkg->residual, eid, &residualFrom, NULL);
 
-    // 如果edge是正向的，则flow的增加是同向的；否则相反
-    if (did & 1)
-      pkg->flow[eid] -= step;
-    else
+    if (networkFrom == residualFrom) {
       pkg->flow[eid] += step;
+    } else {
+      pkg->flow[eid] -= step;
+    }
 
+    pkg->curr[eid] += step;
     if (pkg->curr[eid] == pkg->cap[eid]) {
       // 若残余网络的边的flow满容，则反转，
       // 视作原网络边可释放的flow
       pkg->curr[eid] = 0;
-      reverse(pkg->residual, did, from, to);
+      cgraphReverseEdge(pkg->residual, eid);
     }
-    to = from;
+
+    eid = pkg->pred[residualFrom];
   }
+
   cgraphIterResetEdge(pkg->iter, INVALID_ID);
 }
 
 FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
                                   const FlowType capacity[], FlowType flow[],
                                   const CGraphId source, const CGraphId sink) {
-  const CGraphView *view = VIEW(network);
-  CGraphView *residual = buildResidualNetwork(view);
-
-  CGraphIter *iter = cgraphIterFromView(residual);
+  CGraph residual;
+  cgraphCopy(&residual, network);
+  CGraphIter *iter = cgraphGetIter(&residual);
   CGraphQueue *queue = cgraphQueueCreate(network->vertNum);
-  CGraphId *pred = malloc(view->vertRange * sizeof(CGraphId));
-  FlowType *curr = calloc(view->edgeRange, sizeof(FlowType));
-  memset(flow, 0, view->edgeRange * sizeof(FlowType));
+  CGraphId *pred = malloc(network->vertRange * sizeof(CGraphId));
+  FlowType *curr = calloc(network->edgeRange, sizeof(FlowType));
+  memset(flow, 0, network->edgeRange * sizeof(FlowType));
 
-  const Package pkg = {source, sink,     residual, iter,
-                       pred,   capacity, curr,     flow};
+  const Package pkg = {network, &residual, source, sink, iter,
+                       pred, capacity, curr, flow};
 
   FlowType maxFlow = 0;
-  while (1) {
-    memset(pred, INVALID_ID, view->vertRange * sizeof(CGraphId));
+  while (true) {
+    memset(pred, INVALID_ID, network->vertRange * sizeof(CGraphId));
     if (!bfs(&pkg, queue)) break;
 
     const FlowType step = pathFlow(&pkg);
@@ -130,8 +107,8 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
 
   free(pred);
   free(curr);
-  free(residual);
   cgraphIterRelease(iter);
+  cgraphRelease(&residual);
   cgraphQueueRelease(queue);
   return maxFlow;
 }

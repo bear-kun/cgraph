@@ -1,19 +1,14 @@
 #include "iter.h"
-#include "internal/developer.h"
 #include <stdlib.h>
 #include <string.h>
 
-CGraphIter *cgraphIterFromView(const CGraphView *view) {
-  CGraphIter *iter =
-      malloc(sizeof(CGraphIter) + view->vertRange * sizeof(CGraphId));
-  iter->view = view;
-  iter->vertCurr = view->vertHead;
-  memcpy(iter->edgeCurr, view->edgeHead, view->vertRange * sizeof(CGraphId));
-  return iter;
-}
-
 CGraphIter *cgraphGetIter(const CGraph *graph) {
-  return cgraphIterFromView(VIEW(graph));
+  CGraphIter *iter =
+      malloc(sizeof(CGraphIter) + graph->vertRange * sizeof(CGraphId));
+  iter->view = graph;
+  iter->vertCurr = graph->vertHead;
+  memcpy(iter->edgeCurr, graph->edgeHead, graph->vertRange * sizeof(CGraphId));
+  return iter;
 }
 
 void cgraphIterRelease(CGraphIter *iter) { free(iter); }
@@ -23,11 +18,23 @@ void cgraphIterResetVert(CGraphIter *iter) {
 }
 
 void cgraphIterResetEdge(CGraphIter *iter, const CGraphId from) {
-  const CGraphView *view = iter->view;
+  const CGraph *view = iter->view;
   if (from == INVALID_ID) {
     memcpy(iter->edgeCurr, view->edgeHead, view->vertRange * sizeof(CGraphId));
   } else {
     iter->edgeCurr[from] = view->edgeHead[from];
+  }
+}
+
+static void cgraphParseEdgeForward(const CGraph *graph, const CGraphId did,
+                                   CGraphId *eid, CGraphId *to) {
+  // 高度重复可预测，保留分支版本
+  if (graph->directed) {
+    *eid = did;
+    *to = graph->edgeTo[did];
+  } else {
+    *eid = did >> 1;
+    *to = (did & 1 ? graph->edgeFrom : graph->edgeTo)[*eid];
   }
 }
 
@@ -37,7 +44,7 @@ void cgraphIterCurr(const CGraphIter *iter, CGraphId *from, CGraphId *eid,
   if (*from == INVALID_ID) return;
   *eid = iter->edgeCurr[*from];
   if (*eid == INVALID_ID) return;
-  cgraphIterParseF(iter->view, *eid, eid, to);
+  cgraphParseEdgeForward(iter->view, *eid, eid, to);
 }
 
 CGraphBool cgraphIterNextVert(CGraphIter *iter, CGraphId *vid) {
@@ -51,39 +58,20 @@ CGraphBool cgraphIterNextEdge(CGraphIter *iter, const CGraphId from,
                               CGraphId *eid, CGraphId *to) {
   CGraphId *curr = iter->edgeCurr + from;
   if (*curr == INVALID_ID) return false;
-  cgraphIterParseF(iter->view, *curr, eid, to);
+  cgraphParseEdgeForward(iter->view, *curr, eid, to);
   *curr = iter->view->edgeNext[*curr];
   return true;
 }
 
-void cgraphIterParseF(const CGraphView *view, const CGraphId did, CGraphId *eid,
-                      CGraphId *to) {
-  // 高度重复可预测，保留分支版本
-  if (view->directed) {
-    *eid = did;
-    *to = view->edgeTo[did];
-  } else {
-    *eid = did >> 1;
-    *to = (did & 1 ? view->edgeFrom : view->edgeTo)[*eid];
+void cgraphTraverseEdges(const CGraph *graph, void *userData,
+                         void (*callback)(CGraphId, CGraphId, CGraphId,
+                                          void *)) {
+  for (CGraphId from = graph->vertHead; from != INVALID_ID;
+       from = graph->vertNext[from]) {
+    for (CGraphId did = graph->edgeHead[from], eid, to; did != INVALID_ID;
+         did = graph->edgeNext[did]) {
+      cgraphParseEdgeForward(graph, did, &eid, &to);
+      callback(from, eid, to, userData);
+    }
   }
-}
-
-void cgraphIterParseB(const CGraphView *view, const CGraphId did, CGraphId *eid,
-                      CGraphId *from) {
-  if (view->directed) {
-    *eid = did;
-    *from = view->edgeFrom[did];
-  } else {
-    *eid = did >> 1;
-    *from = (did & 1 ? view->edgeTo : view->edgeFrom)[*eid];
-  }
-}
-
-CGraphBool cgraphIterNextDirect(CGraphIter *iter, const CGraphId from,
-                                CGraphId *did) {
-  CGraphId *curr = iter->edgeCurr + from;
-  if (*curr == INVALID_ID) return false;
-  *did = *curr;
-  *curr = iter->view->edgeNext[*curr];
-  return true;
 }

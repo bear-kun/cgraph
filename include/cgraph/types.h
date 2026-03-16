@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define INVALID_ID (-1)
+#define CGRAPH_INF INT64_MAX
+
 typedef bool CGraphBool;
 typedef int64_t CGraphInt;
 typedef int64_t CGraphId;
@@ -14,27 +17,22 @@ typedef WeightType FlowType; // flow
 
 typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 
-// 最小图结构
 typedef struct {
-  CGraphSize vertRange;
+  CGraphSize vertCap, vertNum;
+  CGraphId vertRange, vertFree;
   CGraphId vertHead, *vertNext;
+  CGraphResizeCallback vertResize;
 
   CGraphBool directed;
-  CGraphSize edgeRange;
+  CGraphSize edgeCap, edgeNum;
+  CGraphId edgeRange, edgeFree;
   CGraphId *edgeHead, *edgeNext;
   CGraphId *edgeFrom, *edgeTo;
-} CGraphView;
-
-typedef struct {
-  CGraphSize vertCap, edgeCap;
-  CGraphSize vertNum, edgeNum;
-  CGraphId vertFree, edgeFree;
-  CGraphResizeCallback vertResize, edgeResize;
-  CGraphView view;
+  CGraphResizeCallback edgeResize;
 } CGraph;
 
 typedef struct {
-  const CGraphView *view;
+  const CGraph *view;
   CGraphId vertCurr;
   CGraphId edgeCurr[0];
 } CGraphIter;

@@ -1,7 +1,7 @@
 #ifndef GRAPH_LINKED_PATH_H
 #define GRAPH_LINKED_PATH_H
 
-#include "../type.h"
+#include "cgraph/types.h"
 
 typedef struct CGraphLinkedNode_ CGraphLinkedNode;
 

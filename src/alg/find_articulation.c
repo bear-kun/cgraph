@@ -1,12 +1,14 @@
-#include "internal/developer.h"
+#include "cgraph/graph.h"
+#include "cgraph/iter.h"
 #include "struct/linked_list.h"
 #include <stdlib.h>
 
 typedef struct VertexAttribute_ Vertex;
+
 struct VertexAttribute_ {
   CGraphBool visited;
   CGraphId preorder; // dfs中第一次访问节点的序数
-  CGraphId lowest;   // 该点所在的所有圈的所有顶点中最小的序数（一个点也视作圈）
+  CGraphId lowest; // 该点所在的所有圈的所有顶点中最小的序数（一个点也视作圈）
   Vertex *pred;
 };
 
@@ -56,10 +58,8 @@ static void findArticulationStep(Package *pkg, const CGraphId from) {
 
 void cgraphFindArticulation(const CGraph *const graph,
                             CGraphLinkedNode **articulations) {
-  const CGraphView *view = VIEW(graph);
-  Vertex *vertices = calloc(view->vertRange, sizeof(Vertex));
-
-  Package pkg = {cgraphIterFromView(view), vertices, articulations, 0};
+  Vertex *vertices = calloc(graph->vertRange, sizeof(Vertex));
+  Package pkg = {cgraphGetIter(graph), vertices, articulations, 0};
   const CGraphId root = pkg.iter->vertCurr;
   findArticulationStep(&pkg, root);
 

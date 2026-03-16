@@ -1,7 +1,7 @@
 #ifndef GRAPH_ITER_H
 #define GRAPH_ITER_H
 
-#include "type.h"
+#include "types.h"
 
 CGraphIter *cgraphGetIter(const CGraph *graph);
 void cgraphIterRelease(CGraphIter *iter);

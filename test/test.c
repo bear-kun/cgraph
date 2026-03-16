@@ -9,13 +9,13 @@ typedef struct {
 
 static void addEdges(CGraph *graph, const CGraphSize num, Endpoint edges[]) {
   for (CGraphSize i = 0; i < num; ++i) {
-    cgraphAddEdge(graph, edges[i].from, edges[i].to, true);
+    cgraphAddEdge(graph, edges[i].from, edges[i].to);
   }
 }
 
 static void addEdgesU(CGraph *graph, const CGraphSize num, Endpoint edges[]) {
   for (CGraphSize i = 0; i < num; ++i) {
-    cgraphAddEdge(graph, edges[i].from, edges[i].to, false);
+    cgraphAddEdge(graph, edges[i].from, edges[i].to);
   }
 }
 
@@ -24,13 +24,13 @@ int testIter() {
   cgraphInit(&graph, false, 10, 10);
 
   cgraphReserveVert(&graph, 5);
-  cgraphAddEdge(&graph, 0, 1, false);
-  cgraphAddEdge(&graph, 1, 2, true);
-  cgraphAddEdge(&graph, 2, 3, true);
+  cgraphAddEdge(&graph, 0, 1);
+  cgraphAddEdge(&graph, 1, 2);
+  cgraphAddEdge(&graph, 2, 3);
   cgraphDeleteEdge(&graph, 0);
-  cgraphAddEdge(&graph, 3, 4, false);
+  cgraphAddEdge(&graph, 3, 4);
   cgraphDeleteEdge(&graph, 2);
-  cgraphAddEdge(&graph, 4, 0, true);
+  cgraphAddEdge(&graph, 4, 0);
 
   CGraphIter *iter = cgraphGetIter(&graph);
   CGraphId from, to, edge;

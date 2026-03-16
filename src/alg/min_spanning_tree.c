@@ -1,18 +1,17 @@
-#include "internal/developer.h"
+#include "cgraph/graph.h"
+#include "cgraph/iter.h"
 #include "struct/disjoint_set.h"
 #include "struct/heap.h"
 #include "struct/pairing_heap.h"
 #include <stdlib.h>
-#include <string.h>
 
 void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
                    CGraphId predecessor[], const CGraphId root) {
-  const CGraphView *view = VIEW(graph);
-  CGraphIter *iter = cgraphIterFromView(view);
-  CGraphBool *visited = calloc(view->vertRange, sizeof(CGraphBool));
-  WeightType *minWeight = malloc(view->vertRange * sizeof(WeightType));
+  CGraphIter *iter = cgraphGetIter(graph);
+  CGraphBool *visited = calloc(graph->vertRange, sizeof(CGraphBool));
+  WeightType *minWeight = malloc(graph->vertRange * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vertNum, minWeight);
-  memset(minWeight, UNREACHABLE_BYTE, view->vertRange * sizeof(WeightType));
+  for (CGraphId i = 0; i < graph->vertRange; i++) minWeight[i] = CGRAPH_INF;
 
   visited[root] = true;
   predecessor[root] = INVALID_ID;
@@ -42,7 +41,8 @@ void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
   cgraphPairingHeapRelease(heap);
 }
 
-static void callback(CGraphId from, CGraphId eid, CGraphId to, void *userData) {
+static void callback(CGraphId from, const CGraphId eid, CGraphId to,
+                     void *userData) {
   CGraphHeap *heap = *(void **)userData;
   CGraphBool *isInHeap = *((void **)userData + 1);
   // 去除反向边
@@ -52,26 +52,25 @@ static void callback(CGraphId from, CGraphId eid, CGraphId to, void *userData) {
   }
 }
 
-static void KruskalHeapInit(const CGraphView *view, CGraphHeap *heap) {
-  CGraphBool *isInHeap = calloc(view->edgeRange, sizeof(CGraphBool));
+static void KruskalHeapInit(const CGraph *graph, CGraphHeap *heap) {
+  CGraphBool *isInHeap = calloc(graph->edgeRange, sizeof(CGraphBool));
   void *userData[] = {heap, isInHeap};
-  cgraphTraverseEdgeV(view, userData, callback);
+  cgraphTraverseEdges(graph, userData, callback);
   free(isInHeap);
   cgraphHeapBuild(heap);
 }
 
 void cgraphMSTKruskal(const CGraph *graph, const WeightType weight[],
                       CGraphId edges[]) {
-  const CGraphView *view = VIEW(graph);
   CGraphHeap *heap = cgraphHeapCreate(graph->edgeNum, weight);
   CGraphDisjointSet *disjointSet = cgraphDisjointCreate(graph->vertNum);
-  KruskalHeapInit(view, heap);
+  KruskalHeapInit(graph, heap);
 
   CGraphSize counter = 0;
   while (!cgraphHeapEmpty(heap)) {
     const CGraphId eid = cgraphHeapPop(heap);
-    const CGraphId cls1 = cgraphDisjointFind(disjointSet, view->edgeFrom[eid]);
-    const CGraphId cls2 = cgraphDisjointFind(disjointSet, view->edgeTo[eid]);
+    const CGraphId cls1 = cgraphDisjointFind(disjointSet, graph->edgeFrom[eid]);
+    const CGraphId cls2 = cgraphDisjointFind(disjointSet, graph->edgeTo[eid]);
 
     if (cls1 != cls2) {
       edges[counter++] = eid;

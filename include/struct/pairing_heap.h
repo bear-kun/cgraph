@@ -1,7 +1,7 @@
 #ifndef PAIRING_HEAP_H
 #define PAIRING_HEAP_H
 
-#include "../type.h"
+#include "cgraph/types.h"
 
 // 视作只有右子树符合约定的搜索二叉树
 typedef struct PairingHeapNode_ PairingHeapNode;

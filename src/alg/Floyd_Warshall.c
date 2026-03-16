@@ -1,4 +1,4 @@
-#include "internal/developer.h"
+#include "cgraph/types.h"
 
 /*
  * Floyd-Warshall算法
@@ -8,18 +8,18 @@
 
 void FloydWarshallWeightedPath(WeightType **weight, const CGraphSize vertNum,
                                CGraphId **path, WeightType **distance) {
-  for (CGraphSize i = 0; i < vertNum; i++) {
-    for (CGraphSize j = 0; j < vertNum; j++) {
+  for (CGraphId i = 0; i < vertNum; i++) {
+    for (CGraphId j = 0; j < vertNum; j++) {
       distance[i][j] = weight[i][j];
       path[i][j] = j;
     }
   }
-  for (CGraphSize middle = 0; middle < vertNum; ++middle) {
-    for (CGraphSize source = 0; source < vertNum; ++source) {
-      if (distance[source][middle] == UNREACHABLE) continue;
+  for (CGraphId middle = 0; middle < vertNum; ++middle) {
+    for (CGraphId source = 0; source < vertNum; ++source) {
+      if (distance[source][middle] == CGRAPH_INF) continue;
 
-      for (CGraphSize target = 0; target < vertNum; ++target) {
-        if (distance[middle][target] == UNREACHABLE) continue;
+      for (CGraphId target = 0; target < vertNum; ++target) {
+        if (distance[middle][target] == CGRAPH_INF) continue;
 
         if (distance[source][middle] + distance[middle][target] <
             distance[source][target]) {

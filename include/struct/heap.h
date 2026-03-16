@@ -1,7 +1,7 @@
 #ifndef HEAP_H
 #define HEAP_H
 
-#include "../type.h"
+#include "cgraph/types.h"
 
 typedef struct {
   CGraphSize capacity, size;

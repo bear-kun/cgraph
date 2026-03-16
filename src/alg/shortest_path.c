@@ -1,19 +1,43 @@
-#include "internal/developer.h"
+#include "cgraph/graph.h"
+#include "cgraph/iter.h"
 #include "struct/pairing_heap.h"
 #include "struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 
+void cgraphUnweightedShortest(const CGraph *const graph, CGraphId predecessor[],
+                              const CGraphId source, const CGraphId target) {
+  CGraphIter *iter = cgraphGetIter(graph);
+  CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
+  memset(predecessor, INVALID_ID, sizeof(CGraphId) * graph->vertRange);
+
+  predecessor[source] = source;
+  cgraphQueuePush(queue, source);
+  while (!cgraphQueueEmpty(queue)) {
+    const CGraphId from = cgraphQueuePop(queue);
+
+    CGraphId eid, to;
+    while (cgraphIterNextEdge(iter, from, &eid, &to)) {
+      if (predecessor[to] == INVALID_ID) {
+        predecessor[to] = from;
+        if (to == target) return;
+        cgraphQueuePush(queue, to);
+      }
+    }
+  }
+  cgraphIterRelease(iter);
+  cgraphQueueRelease(queue);
+}
+
 void cgraphShortestDijkstra(const CGraph *const graph,
                             const WeightType weights[], CGraphId predecessor[],
                             const CGraphId source, const CGraphId target) {
-  const CGraphView *view = VIEW(graph);
-  CGraphIter *iter = cgraphIterFromView(view);
-  CGraphBool *visited = calloc(view->vertRange, sizeof(CGraphBool));
-  WeightType *distance = malloc(view->vertRange * sizeof(WeightType));
+  CGraphIter *iter = cgraphGetIter(graph);
+  CGraphBool *visited = calloc(graph->vertRange, sizeof(CGraphBool));
+  WeightType *distance = malloc(graph->vertRange * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vertNum, distance);
-  memset(distance, UNREACHABLE_BYTE, view->vertRange * sizeof(WeightType));
-  memset(predecessor, INVALID_ID, view->vertRange * sizeof(CGraphId));
+  memset(predecessor, INVALID_ID, graph->vertRange * sizeof(CGraphId));
+  for (CGraphId i = 0; i < graph->vertRange; i++) distance[i] = CGRAPH_INF;
 
   visited[source] = true;
   distance[source] = 0;
@@ -48,13 +72,12 @@ void cgraphShortestDijkstra(const CGraph *const graph,
 void cgraphShortestBellmanFord(const CGraph *const graph,
                                const WeightType weights[],
                                CGraphId predecessor[], const CGraphId source) {
-  const CGraphView *view = VIEW(graph);
-  CGraphIter *iter = cgraphIterFromView(view);
+  CGraphIter *iter = cgraphGetIter(graph);
   CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
-  CGraphBool *isInQueue = calloc(view->vertRange, sizeof(CGraphBool));
-  WeightType *distance = malloc(view->vertRange * sizeof(WeightType));
-  memset(distance, UNREACHABLE_BYTE, view->vertRange * sizeof(WeightType));
-  memset(predecessor, INVALID_ID, view->vertRange * sizeof(CGraphId));
+  CGraphBool *isInQueue = calloc(graph->vertRange, sizeof(CGraphBool));
+  WeightType *distance = malloc(graph->vertRange * sizeof(WeightType));
+  memset(predecessor, INVALID_ID, graph->vertRange * sizeof(CGraphId));
+  for (CGraphId i = 0; i < graph->vertRange; i++) distance[i] = CGRAPH_INF;
 
   CGraphId eid, to;
   distance[source] = 0;

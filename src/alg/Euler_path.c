@@ -1,4 +1,5 @@
-#include "internal/developer.h"
+#include "cgraph/graph.h"
+#include "cgraph/iter.h"
 #include "struct/stack.h"
 #include <stdlib.h>
 
@@ -57,17 +58,16 @@ static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
 
     if (!insert(pkg, from)) return false;
 
-    if (cgraphStackEmpty(stack)) return true;        // 结束
-    from = cgraphStackPop(stack);                    // 返回
+    if (cgraphStackEmpty(stack)) return true; // 结束
+    from = cgraphStackPop(stack); // 返回
     pkg->currTgt = from;
   }
 }
 
 void cgraphEulerPath(const CGraph *const graph, CGraphId path[],
                      const CGraphId src, const CGraphId dst) {
-  const CGraphView *view = VIEW(graph);
-  Package pkg = {.iter = cgraphIterFromView(view),
-                 .visited = calloc(view->edgeRange, sizeof(CGraphBool)),
+  Package pkg = {.iter = cgraphGetIter(graph),
+                 .visited = calloc(graph->edgeRange, sizeof(CGraphBool)),
                  .path = path + graph->edgeNum + 1,
                  .currTgt = dst};
 
