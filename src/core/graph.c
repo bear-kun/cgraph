@@ -71,8 +71,8 @@ static void initNextList2(CGraphId *list, const CGraphSize start,
 
 void cgraphClearEdges(CGraph *graph) {
   graph->edgeNum = 0;
-  graph->edgeRange = 0;
   graph->edgeFree = 0;
+  graph->edgeRange = 0;
   memset(graph->edgeHead, INVALID_ID, graph->vertCap * sizeof(CGraphId));
   if (graph->directed) {
     initNextList(graph->edgeNext, 0, graph->edgeCap);
@@ -196,7 +196,7 @@ CGraphId cgraphPushEdgeBack(CGraph *const graph, const CGraphId from,
   listUnlink(graph->edgeNext, &graph->edgeFree);
   CGraphId *back = graph->edgeHead + from;
   while (*back != INVALID_ID) back = graph->edgeNext + *back;
-  *back = to;
+  listInsert(graph->edgeNext, back, eid);
 
   graph->edgeFrom[eid] = from;
   graph->edgeTo[eid] = to;
