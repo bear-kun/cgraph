@@ -18,7 +18,7 @@ static void indegreeInitQueue(const CGraph *graph,
 }
 
 typedef struct {
-  CGraphIter *iter;
+  const CGraph *graph;
   CGraphQueue *queue;
   CGraphInt *indegree;
   const TimeType *duration;
@@ -27,10 +27,12 @@ typedef struct {
 } Package;
 
 static void forward(const Package *const pkg) {
-  CGraphId eid, to;
   while (!cgraphQueueEmpty(pkg->queue)) {
     const CGraphId from = cgraphQueuePop(pkg->queue);
-    while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
+
+    CGraphId eid, to;
+    CGraphIterLite iter = cgraphGetEdgeIter(pkg->graph, from);
+    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (pkg->earlyStart[to] < pkg->earlyStart[from] + pkg->duration[eid]) {
         pkg->earlyStart[to] = pkg->earlyStart[from] + pkg->duration[eid];
       }
@@ -42,10 +44,11 @@ static void forward(const Package *const pkg) {
 static void backward(const Package *pkg, const CGraphId *const begin,
                      const CGraphId *const end) {
   const CGraphId *p = end;
-  CGraphId eid, to;
   do {
     const CGraphId from = *--p;
-    while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
+    CGraphId eid, to;
+    CGraphIterLite iter = cgraphGetEdgeIter(pkg->graph, from);
+    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (pkg->lateStart[from] > pkg->lateStart[to] - pkg->duration[eid]) {
         pkg->lateStart[from] = pkg->lateStart[to] - pkg->duration[eid];
         if (pkg->lateStart[from] == pkg->earlyStart[from]) {
@@ -61,7 +64,6 @@ static void init(Package *pkg, const CGraph *graph,
                  const CGraphInt indegree[]) {
   const CGraphSize vertRange = graph->vertRange;
 
-  pkg->iter = cgraphGetIter(graph);
   pkg->queue = cgraphQueueCreate(vertRange);
   indegreeInitQueue(graph, pkg->indegree, pkg->queue);
   pkg->indegree = malloc(vertRange * sizeof(CGraphInt));
@@ -82,7 +84,6 @@ void cgraphCriticalPath(const CGraph *aoa, const CGraphInt indegree[],
   init(&pkg, aoa, indegree);
 
   forward(&pkg);
-  cgraphIterResetEdge(pkg.iter, INVALID_ID);
 
   const CGraphId *last = pkg.queue->elems + aoa->vertNum - 1;
   lateStart[*last] = earlyStart[*last];
@@ -90,6 +91,5 @@ void cgraphCriticalPath(const CGraph *aoa, const CGraphInt indegree[],
   backward(&pkg, pkg.queue->elems, last);
 
   free(pkg.indegree);
-  cgraphIterRelease(pkg.iter);
   cgraphQueueRelease(pkg.queue);
 }

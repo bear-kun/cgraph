@@ -26,7 +26,7 @@ void cgraphIterResetEdge(CGraphIter *iter, const CGraphId from) {
   }
 }
 
-static void cgraphParseEdgeForward(const CGraph *graph, const CGraphId did,
+static void parseF(const CGraph *graph, const CGraphId did,
                                    CGraphId *eid, CGraphId *to) {
   // 高度重复可预测，保留分支版本
   if (graph->directed) {
@@ -44,7 +44,7 @@ void cgraphIterCurr(const CGraphIter *iter, CGraphId *from, CGraphId *eid,
   if (*from == INVALID_ID) return;
   *eid = iter->edgeCurr[*from];
   if (*eid == INVALID_ID) return;
-  cgraphParseEdgeForward(iter->view, *eid, eid, to);
+  parseF(iter->view, *eid, eid, to);
 }
 
 CGraphBool cgraphIterNextVert(CGraphIter *iter, CGraphId *vid) {
@@ -58,8 +58,30 @@ CGraphBool cgraphIterNextEdge(CGraphIter *iter, const CGraphId from,
                               CGraphId *eid, CGraphId *to) {
   CGraphId *curr = iter->edgeCurr + from;
   if (*curr == INVALID_ID) return false;
-  cgraphParseEdgeForward(iter->view, *curr, eid, to);
+  parseF(iter->view, *curr, eid, to);
   *curr = iter->view->edgeNext[*curr];
+  return true;
+}
+
+CGraphIterLite cgraphGetVertIter(const CGraph *graph) {
+  return (CGraphIterLite){graph, graph->vertHead};
+}
+
+CGraphIterLite cgraphGetEdgeIter(const CGraph *graph, const CGraphId from) {
+  return (CGraphIterLite){graph, graph->edgeHead[from]};
+}
+
+CGraphBool cgraphIterLiteNextVert(CGraphIterLite *iter, CGraphId *vid) {
+  if (iter->curr == INVALID_ID) return false;
+  *vid = iter->curr;
+  iter->curr = iter->view->vertNext[iter->curr];
+  return true;
+}
+
+CGraphBool cgraphIterLiteNextEdge(CGraphIterLite *iter, CGraphId *eid, CGraphId *to) {
+  if (iter->curr == INVALID_ID) return false;
+  parseF(iter->view, iter->curr, eid, to);
+  iter->curr = iter->view->edgeNext[iter->curr];
   return true;
 }
 
@@ -70,7 +92,7 @@ void cgraphTraverseEdges(const CGraph *graph, void *userData,
        from = graph->vertNext[from]) {
     for (CGraphId did = graph->edgeHead[from], eid, to; did != INVALID_ID;
          did = graph->edgeNext[did]) {
-      cgraphParseEdgeForward(graph, did, &eid, &to);
+      parseF(graph, did, &eid, &to);
       callback(from, eid, to, userData);
     }
   }

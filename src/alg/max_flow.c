@@ -8,7 +8,6 @@ typedef struct {
   const CGraph *network;
   CGraph *residual;
   CGraphId src, sink;
-  CGraphIter *iter;
   CGraphId *pred; // eid
   const FlowType *cap;
   FlowType *curr;
@@ -28,7 +27,8 @@ static CGraphBool bfs(const Package *pkg, CGraphQueue *const queue) {
     const CGraphId from = cgraphQueuePop(queue);
 
     CGraphId eid, to;
-    while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
+    CGraphIterLite iter = cgraphGetEdgeIter(pkg->residual, from);
+    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (to != pkg->src && pkg->pred[to] == INVALID_ID) {
         pkg->pred[to] = eid;
         if (to == pkg->sink) return true;
@@ -75,8 +75,6 @@ static void update(const Package *pkg, const FlowType step) {
 
     eid = pkg->pred[residualFrom];
   }
-
-  cgraphIterResetEdge(pkg->iter, INVALID_ID);
 }
 
 FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
@@ -84,13 +82,12 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
                                   const CGraphId source, const CGraphId sink) {
   CGraph residual;
   cgraphCopy(&residual, network);
-  CGraphIter *iter = cgraphGetIter(&residual);
   CGraphQueue *queue = cgraphQueueCreate(network->vertNum);
   CGraphId *pred = malloc(network->vertRange * sizeof(CGraphId));
   FlowType *curr = calloc(network->edgeRange, sizeof(FlowType));
   memset(flow, 0, network->edgeRange * sizeof(FlowType));
 
-  const Package pkg = {network, &residual, source, sink, iter,
+  const Package pkg = {network, &residual, source, sink,
                        pred, capacity, curr, flow};
 
   FlowType maxFlow = 0;
@@ -105,7 +102,6 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
 
   free(pred);
   free(curr);
-  cgraphIterRelease(iter);
   cgraphRelease(&residual);
   cgraphQueueRelease(queue);
   return maxFlow;

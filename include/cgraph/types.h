@@ -37,4 +37,9 @@ typedef struct {
   CGraphId edgeCurr[0];
 } CGraphIter;
 
+typedef struct {
+  const CGraph *view;
+  CGraphId curr;
+} CGraphIterLite;
+
 #endif // GRAPH_VERTEX_EDGE_H

@@ -7,7 +7,6 @@
 
 void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
                    CGraphId predecessor[], const CGraphId root) {
-  CGraphIter *iter = cgraphGetIter(graph);
   CGraphBool *visited = calloc(graph->vertRange, sizeof(CGraphBool));
   WeightType *minWeight = malloc(graph->vertRange * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vertNum, minWeight);
@@ -20,7 +19,8 @@ void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
     const CGraphId from = cgraphPairingHeapPop(heap);
 
     CGraphId eid, to;
-    while (cgraphIterNextEdge(iter, from, &eid, &to)) {
+    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (weights[eid] < minWeight[to]) {
         minWeight[to] = weights[eid];
         predecessor[to] = from;
@@ -37,7 +37,6 @@ void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
 
   free(visited);
   free(minWeight);
-  cgraphIterRelease(iter);
   cgraphPairingHeapRelease(heap);
 }
 

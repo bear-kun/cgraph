@@ -18,7 +18,6 @@ static void indegreeInitQueue(const CGraph *graph,
 
 void cgraphTopoPath(const CGraph *const graph, const CGraphInt indegree[],
                     CGraphId predecessor[]) {
-  CGraphIter *iter = cgraphGetIter(graph);
   CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
   CGraphInt *copiedIndegree = malloc(graph->vertRange * sizeof(CGraphInt));
   memcpy(copiedIndegree, indegree, graph->vertRange * sizeof(CGraphInt));
@@ -26,11 +25,13 @@ void cgraphTopoPath(const CGraph *const graph, const CGraphInt indegree[],
   indegreeInitQueue(graph, indegree, queue);
 
   CGraphInt counter = 0;
-  CGraphId eid, to;
   while (!cgraphQueueEmpty(queue)) {
     const CGraphId from = cgraphQueuePop(queue);
-    ++counter;
-    while (cgraphIterNextEdge(iter, from, &eid, &to)) {
+    counter++;
+
+    CGraphId eid, to;
+    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (predecessor[to] == -1) predecessor[to] = from;
       if (--copiedIndegree[to] == 0) cgraphQueuePush(queue, to);
     }
@@ -41,25 +42,24 @@ void cgraphTopoPath(const CGraph *const graph, const CGraphInt indegree[],
   }
 
   free(copiedIndegree);
-  cgraphIterRelease(iter);
   cgraphQueueRelease(queue);
 }
 
 void cgraphTopoSort(const CGraph *const graph, const CGraphInt indegree[],
                     CGraphId sort[]) {
-  CGraphIter *iter = cgraphGetIter(graph);
   CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
   CGraphInt *copiedIndegree = malloc(graph->vertRange * sizeof(CGraphInt));
   memcpy(copiedIndegree, indegree, graph->vertRange * sizeof(CGraphInt));
   indegreeInitQueue(graph, indegree, queue);
 
   CGraphInt counter = 0;
-  CGraphId id, to;
   while (!cgraphQueueEmpty(queue)) {
     const CGraphId from = cgraphQueuePop(queue);
     sort[counter++] = from;
 
-    while (cgraphIterNextEdge(iter, from, &id, &to)) {
+    CGraphId eid, to;
+    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (--copiedIndegree[to] == 0) cgraphQueuePush(queue, to);
     }
   }
@@ -69,6 +69,5 @@ void cgraphTopoSort(const CGraph *const graph, const CGraphInt indegree[],
   }
 
   free(copiedIndegree);
-  cgraphIterRelease(iter);
   cgraphQueueRelease(queue);
 }
