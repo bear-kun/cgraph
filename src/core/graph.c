@@ -251,7 +251,7 @@ void cgraphReverseEdge(const CGraph *const graph, const CGraphId eid) {
   graph->edgeTo[eid] = from;
 }
 
-CGraphId cgraphFindEdgeId(const CGraph *graph, const CGraphId from,
+CGraphId cgraphFindEdge(const CGraph *graph, const CGraphId from,
                           const CGraphId to) {
   for (CGraphId eid = graph->edgeHead[from]; eid != INVALID_ID;
        eid = graph->edgeNext[eid]) {
@@ -261,10 +261,12 @@ CGraphId cgraphFindEdgeId(const CGraph *graph, const CGraphId from,
   return INVALID_ID;
 }
 
-void cgraphParseEdgeId(const CGraph *graph, const CGraphId eid, CGraphId *from,
-                       CGraphId *to) {
-  if (from) *from = graph->edgeFrom[eid];
-  if (to) *to = graph->edgeTo[eid];
+CGraphId cgraphParseEdgeFrom(const CGraph *graph, const CGraphId eid) {
+  return graph->edgeFrom[eid];
+}
+
+CGraphId cgraphParseEdgeTo(const CGraph *graph, const CGraphId eid) {
+  return graph->edgeTo[eid];
 }
 
 void cgraphSetVertResizeCallback(CGraph *graph,
