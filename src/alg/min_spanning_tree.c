@@ -26,10 +26,10 @@ void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
         predecessor[to] = from;
 
         if (visited[to]) {
-          cgraphPairingHeapPush(heap, to);
+          cgraphPairingHeapUpdate(heap, to);
         } else {
           visited[to] = true;
-          cgraphPairingHeapUpdate(heap, to);
+          cgraphPairingHeapPush(heap, to);
         }
       }
     }

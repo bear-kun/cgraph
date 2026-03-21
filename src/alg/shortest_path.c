@@ -19,7 +19,7 @@ void cgraphUnweightedShortest(const CGraph *const graph, CGraphId predecessor[],
     while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (predecessor[to] == INVALID_ID) {
         predecessor[to] = from;
-        if (to == target) return;
+        if (to == target) break;
         cgraphQueuePush(queue, to);
       }
     }

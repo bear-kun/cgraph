@@ -57,21 +57,23 @@ static void findArticulationStep(Package *pkg, const CGraphId from) {
 
 void cgraphFindArticulation(const CGraph *const graph,
                             CGraphLinkedNode **articulations) {
+  CGraphIter *iter = cgraphGetIter(graph);
   Vertex *vertices = calloc(graph->vertRange, sizeof(Vertex));
-  Package pkg = {cgraphGetIter(graph), vertices, articulations, 0};
-  const CGraphId root = pkg.iter->vertCurr;
+  Package pkg = {iter, vertices, articulations, 0};
+  const CGraphId root = iter->vertCurr;
   findArticulationStep(&pkg, root);
 
   // 若根节点有两个及以上的子树，则为割点
-  CGraphId id, to;
+  CGraphId eid, to;
   unsigned children = 0;
-  cgraphIterResetEdge(pkg.iter, root);
-  while (cgraphIterNextEdge(pkg.iter, root, &id, &to)) {
-    if (vertices[to].pred == vertices && ++children == 2) {
-      cgraphLinkedInsert(articulations, 0);
+  cgraphIterResetEdge(iter, root);
+  while (cgraphIterNextEdge(iter, root, &eid, &to)) {
+    if (vertices[to].pred == vertices + root && ++children == 2) {
+      cgraphLinkedInsert(articulations, root);
       break;
     }
   }
+
   free(vertices);
-  cgraphIterRelease(pkg.iter);
+  cgraphIterRelease(iter);
 }
