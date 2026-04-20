@@ -44,7 +44,7 @@ static FlowType pathFlow(const Package *pkg) {
   FlowType flow = CGRAPH_INF;
   CGraphId eid = pkg->pred[pkg->sink];
   while (eid != INVALID_ID) {
-    const CGraphId from = cgraphParseEdgeFrom(pkg->residual, eid);
+    const CGraphId from = cgraphWhereEdgeFrom(pkg->residual, eid);
     if (flow > pkg->cap[eid] - pkg->curr[eid]) {
       flow = pkg->cap[eid] - pkg->curr[eid];
     }
@@ -56,8 +56,8 @@ static FlowType pathFlow(const Package *pkg) {
 static void update(const Package *pkg, const FlowType step) {
   CGraphId eid = pkg->pred[pkg->sink];
   while (eid != INVALID_ID) {
-    const CGraphId networkFrom = cgraphParseEdgeFrom(pkg->network, eid);
-    const CGraphId residualFrom = cgraphParseEdgeFrom(pkg->residual, eid);
+    const CGraphId networkFrom = cgraphWhereEdgeFrom(pkg->network, eid);
+    const CGraphId residualFrom = cgraphWhereEdgeFrom(pkg->residual, eid);
 
     if (networkFrom == residualFrom) {
       pkg->flow[eid] += step;

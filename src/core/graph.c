@@ -1,4 +1,4 @@
-#include "graph.h"
+#include "cgraph/graph.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -261,11 +261,11 @@ CGraphId cgraphFindEdge(const CGraph *graph, const CGraphId from,
   return INVALID_ID;
 }
 
-CGraphId cgraphParseEdgeFrom(const CGraph *graph, const CGraphId eid) {
+CGraphId cgraphWhereEdgeFrom(const CGraph *graph, const CGraphId eid) {
   return graph->edgeFrom[eid];
 }
 
-CGraphId cgraphParseEdgeTo(const CGraph *graph, const CGraphId eid) {
+CGraphId cgraphWhereEdgeTo(const CGraph *graph, const CGraphId eid) {
   return graph->edgeTo[eid];
 }
 

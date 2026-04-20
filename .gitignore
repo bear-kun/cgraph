@@ -8,4 +8,7 @@ cmake-build-release
 
 build
 
+.venv
+
 _*
+!__init__.py
