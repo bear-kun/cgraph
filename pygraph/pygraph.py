@@ -19,6 +19,7 @@ class CGraph(ctypes.Structure):
         ('vert_head', c_id_t), ('vert_next', c_ptr(c_id_t)),
         ('vert_resize', c_resize_cb_t),
 
+        ('directed', c_bool_t),
         ('edge_cap', c_size_t), ('edge_num', c_size_t),
         ('edge_range', c_id_t), ('edge_free', c_id_t),
         ('edge_head', c_ptr(c_id_t)), ('edge_next', c_ptr(c_id_t)),
@@ -34,54 +35,64 @@ class CGraphIterLite(ctypes.Structure):
     ]
 
 
-# core
+c_graph_ptr = c_ptr(CGraph)
+
+# Core
 cgraph_init = cgraph.cgraphInit
-cgraph_init.argtypes = (c_ptr(CGraph), c_bool_t, c_size_t, c_size_t)
+cgraph_init.argtypes = (c_graph_ptr, c_bool_t, c_size_t, c_size_t)
 cgraph_release = cgraph.cgraphRelease
-cgraph_release.argtypes = (c_ptr(CGraph),)
+cgraph_release.argtypes = (c_graph_ptr,)
 cgraph_copy = cgraph.cgraphCopy
-cgraph_copy.argtypes = (c_ptr(CGraph), c_ptr(CGraph))
+cgraph_copy.argtypes = (c_graph_ptr, c_graph_ptr)
 cgraph_clear = cgraph.cgraphClear
-cgraph_clear.argtypes = (c_ptr(CGraph),)
+cgraph_clear.argtypes = (c_graph_ptr,)
 
 cgraph_add_vert = cgraph.cgraphAddVert
 cgraph_add_vert.restype = c_id_t
-cgraph_add_vert.argtypes = (c_ptr(CGraph),)
+cgraph_add_vert.argtypes = (c_graph_ptr,)
 cgraph_reserve_vert = cgraph.cgraphReserveVert
-cgraph_reserve_vert.argtypes = (c_ptr(CGraph), c_size_t)
+cgraph_reserve_vert.argtypes = (c_graph_ptr, c_size_t)
 cgraph_delete_vert = cgraph.cgraphDeleteVert
-cgraph_delete_vert.argtypes = (c_ptr(CGraph), c_id_t)
+cgraph_delete_vert.argtypes = (c_graph_ptr, c_id_t)
 
 cgraph_add_edge = cgraph.cgraphAddEdge
 cgraph_add_edge.restype = c_id_t
-cgraph_add_edge.argtypes = (c_ptr(CGraph), c_id_t, c_id_t)
+cgraph_add_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
 cgraph_reverse_edge = cgraph.cgraphReverseEdge
-cgraph_reverse_edge.argtypes = (c_ptr(CGraph), c_id_t)
+cgraph_reverse_edge.argtypes = (c_graph_ptr, c_id_t)
 cgraph_delete_edge = cgraph.cgraphDeleteEdge
-cgraph_delete_edge.argtypes = (c_ptr(CGraph), c_id_t)
+cgraph_delete_edge.argtypes = (c_graph_ptr, c_id_t)
 cgraph_find_edge = cgraph.cgraphFindEdge
 cgraph_find_edge.restype = c_id_t
-cgraph_find_edge.argtypes = (c_ptr(CGraph), c_id_t, c_id_t)
+cgraph_find_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
 cgraph_where_edge_from = cgraph.cgraphWhereEdgeFrom
 cgraph_where_edge_from.restype = c_id_t
-cgraph_where_edge_from.argtypes = (c_ptr(CGraph), c_id_t)
+cgraph_where_edge_from.argtypes = (c_graph_ptr, c_id_t)
 cgraph_where_edge_to = cgraph.cgraphWhereEdgeTo
 cgraph_where_edge_to.restype = c_id_t
-cgraph_where_edge_to.argtypes = (c_ptr(CGraph), c_id_t)
+cgraph_where_edge_to.argtypes = (c_graph_ptr, c_id_t)
 
 # Iterator
 cgraph_get_vert_iter = cgraph.cgraphGetVertIter
 cgraph_get_vert_iter.restype = CGraphIterLite
-cgraph_get_vert_iter.argtypes = (c_ptr(CGraph),)
+cgraph_get_vert_iter.argtypes = (c_graph_ptr,)
 cgraph_get_edge_iter = cgraph.cgraphGetEdgeIter
 cgraph_get_edge_iter.restype = CGraphIterLite
-cgraph_get_edge_iter.argtypes = (c_ptr(CGraph), c_id_t)
+cgraph_get_edge_iter.argtypes = (c_graph_ptr, c_id_t)
 cgraph_iter_lite_next_vert = cgraph.cgraphIterLiteNextVert
 cgraph_iter_lite_next_vert.restype = c_bool_t
 cgraph_iter_lite_next_vert.argtypes = (c_ptr(CGraphIterLite), c_ptr(c_id_t))
 cgraph_iter_lite_next_edge = cgraph.cgraphIterLiteNextEdge
 cgraph_iter_lite_next_edge.restype = c_bool_t
 cgraph_iter_lite_next_edge.argtypes = (c_ptr(CGraphIterLite), c_ptr(c_id_t), c_ptr(c_id_t))
+
+# Algorithm
+cgraph_euler_path = cgraph.cgraphEulerCircuit
+cgraph_euler_path.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t)
+cgraph_strongly_connected = cgraph.cgraphStronglyConnected
+cgraph_strongly_connected.argtypes = (c_graph_ptr, c_ptr(c_id_t))
+cgraph_unweighted_shortest = cgraph.cgraphUnweightedShortest
+cgraph_unweighted_shortest.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t, c_id_t)
 
 
 class GraphEdges:
@@ -174,3 +185,13 @@ class Graph:
 
     def edges(self, vid):
         return GraphEdges(self.__cg_ptr, vid)
+
+    def euler_path(self, from_vid, to_vid):
+        path = (c_id_t * self.__cgraph.edge_num)()
+        cgraph_euler_path(self.__cg_ptr, path, from_vid, to_vid)
+        return list(path)
+
+    def strongly_connected(self):
+        components = (c_id_t * self.__cgraph.vert_num)()
+        cgraph_strongly_connected(self.__cg_ptr, components)
+        return list(components)

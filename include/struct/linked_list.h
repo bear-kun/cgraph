@@ -10,8 +10,7 @@ struct CGraphLinkedNode_ {
   CGraphId id;
 };
 
-CGraphLinkedNode *cgraphLinkedInsert(CGraphLinkedNode **predNextPtr,
-                                     CGraphId id);
+CGraphLinkedNode *cgraphLinkedInsert(CGraphLinkedNode **predNextPtr, CGraphId id);
 CGraphLinkedNode *cgraphLinkedUnlink(CGraphLinkedNode **predNextPtr);
 void cgraphLinkedClear(CGraphLinkedNode **path);
 

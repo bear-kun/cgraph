@@ -9,7 +9,7 @@ typedef struct {
   CGraphIter *iter;
   CGraphStack *stack;
   CGraphBool *flag;
-  CGraphId *connectionId;
+  CGraphId *components;
   CGraphId counter;
 } Package;
 
@@ -25,22 +25,22 @@ static void forward(Package *pkg, const CGraphId from) {
 
 static void backward(Package *pkg, const CGraphId from) {
   CGraphId eid, to;
-  pkg->connectionId[from] = pkg->counter;
+  pkg->components[from] = pkg->counter;
   pkg->flag[from] = 0;
   while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
     if (pkg->flag[to]) backward(pkg, to);
   }
 }
 
-void cgraphFindScc(const CGraph *graph, CGraphId connectionId[]) {
+void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
   CGraph reverse;
   cgraphCopyVert(&reverse, graph);
   CGraphIter *iter = cgraphGetIter(graph);
   CGraphStack *stack = cgraphStackCreate(graph->vertNum);
   CGraphBool *flag = calloc(graph->vertRange, sizeof(CGraphBool));
-  Package pkg = {&reverse, iter, stack, flag, connectionId, 0};
+  Package pkg = {&reverse, iter, stack, flag, components, 0};
   memset(reverse.edgeHead, INVALID_ID, graph->vertRange * sizeof(CGraphId));
-  memset(connectionId, INVALID_ID, graph->vertRange * sizeof(CGraphId));
+  memset(components, INVALID_ID, graph->vertRange * sizeof(CGraphId));
 
   // 正序
   CGraphId from;
@@ -53,8 +53,10 @@ void cgraphFindScc(const CGraph *graph, CGraphId connectionId[]) {
   cgraphIterResetEdge(pkg.iter, INVALID_ID);
   while (!cgraphStackEmpty(stack)) {
     const CGraphId vert = cgraphStackPop(stack);
-    if (flag[vert] == 1) backward(&pkg, vert);
-    ++pkg.counter;
+    if (flag[vert] == 1) {
+      backward(&pkg, vert);
+      pkg.counter++;
+    }
   }
 
   free(flag);

@@ -55,8 +55,8 @@ static void findArticulationStep(Package *pkg, const CGraphId from) {
   }
 }
 
-void cgraphFindArticulation(const CGraph *const graph,
-                            CGraphLinkedNode **articulations) {
+void cgraphArticulation(const CGraph *const graph,
+                        CGraphLinkedNode **articulations) {
   CGraphIter *iter = cgraphGetIter(graph);
   Vertex *vertices = calloc(graph->vertRange, sizeof(Vertex));
   Package pkg = {iter, vertices, articulations, 0};

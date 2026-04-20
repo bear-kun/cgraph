@@ -5,8 +5,8 @@
 #include "struct/pairing_heap.h"
 #include <stdlib.h>
 
-void cgraphMSTPrim(const CGraph *graph, const WeightType weights[],
-                   CGraphId predecessor[], const CGraphId root) {
+void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[],
+                            CGraphId predecessor[], const CGraphId root) {
   CGraphBool *visited = calloc(graph->vertRange, sizeof(CGraphBool));
   WeightType *minWeight = malloc(graph->vertRange * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vertNum, minWeight);
@@ -59,8 +59,8 @@ static void KruskalHeapInit(const CGraph *graph, CGraphHeap *heap) {
   cgraphHeapBuild(heap);
 }
 
-void cgraphMSTKruskal(const CGraph *graph, const WeightType weight[],
-                      CGraphId edges[]) {
+void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weight[],
+                               CGraphId edges[]) {
   CGraphHeap *heap = cgraphHeapCreate(graph->edgeNum, weight);
   CGraphDisjointSet *disjointSet = cgraphDisjointCreate(graph->vertNum);
   KruskalHeapInit(graph, heap);
