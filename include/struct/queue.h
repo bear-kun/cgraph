@@ -12,21 +12,21 @@ typedef struct {
 CGraphQueue *cgraphQueueCreate(CGraphSize capacity);
 void cgraphQueueRelease(CGraphQueue *queue);
 
-static inline void cgraphQueueClear(CGraphQueue *queue) {
+static void cgraphQueueClear(CGraphQueue *queue) {
   queue->size = queue->front = queue->rear = 0;
 }
 
-static inline CGraphBool cgraphQueueEmpty(const CGraphQueue *queue) {
+static CGraphBool cgraphQueueEmpty(const CGraphQueue *queue) {
   return queue->size == 0;
 }
 
-static inline void cgraphQueuePush(CGraphQueue *queue, const CGraphId item) {
+static void cgraphQueuePush(CGraphQueue *queue, const CGraphId item) {
   queue->elems[queue->front] = item;
   if (++queue->front == queue->capacity) queue->front = 0;
   ++queue->size;
 }
 
-static inline CGraphId cgraphQueuePop(CGraphQueue *queue) {
+static CGraphId cgraphQueuePop(CGraphQueue *queue) {
   const CGraphId item = queue->elems[queue->rear];
   if (++queue->rear == queue->capacity) queue->rear = 0;
   --queue->size;

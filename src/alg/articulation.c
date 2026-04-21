@@ -1,5 +1,6 @@
+#include "cgraph/alg.h"
 #include "cgraph/iter.h"
-#include "struct/linked_list.h"
+#include "struct/vector.h"
 #include <stdlib.h>
 
 typedef struct VertexAttribute_ Vertex;
@@ -14,8 +15,8 @@ struct VertexAttribute_ {
 typedef struct {
   CGraphIter *iter;
   Vertex *vertices;
-  CGraphLinkedNode **arts;
   CGraphId topo;
+  CGraphVector arts;
 } Package;
 
 static void findArticulationStep(Package *pkg, const CGraphId from) {
@@ -37,7 +38,7 @@ static void findArticulationStep(Package *pkg, const CGraphId from) {
       // 使用isArt，只添加一次
       if (adjacent->lowest >= vertex->preorder && !isArt) {
         isArt = 1;
-        cgraphLinkedInsert(pkg->arts, from);
+        cgraphVectorPush(&pkg->arts, from);
       }
 
       // 递归更新lowest
@@ -55,11 +56,10 @@ static void findArticulationStep(Package *pkg, const CGraphId from) {
   }
 }
 
-void cgraphArticulation(const CGraph *const graph,
-                        CGraphLinkedNode **articulations) {
+CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations) {
   CGraphIter *iter = cgraphGetIter(graph);
   Vertex *vertices = calloc(graph->vertRange, sizeof(Vertex));
-  Package pkg = {iter, vertices, articulations, 0};
+  Package pkg = {iter, vertices, 0, cgraphVectorCreate()};
   const CGraphId root = iter->vertCurr;
   findArticulationStep(&pkg, root);
 
@@ -69,11 +69,14 @@ void cgraphArticulation(const CGraph *const graph,
   cgraphIterResetEdge(iter, root);
   while (cgraphIterNextEdge(iter, root, &eid, &to)) {
     if (vertices[to].pred == vertices + root && ++children == 2) {
-      cgraphLinkedInsert(articulations, root);
+      cgraphVectorPush(&pkg.arts, root);
       break;
     }
   }
 
   free(vertices);
   cgraphIterRelease(iter);
+
+  *articulations = cgraphVectorGetData(&pkg.arts);
+  return (CGraphInt)pkg.arts.size;
 }

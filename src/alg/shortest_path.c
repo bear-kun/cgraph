@@ -1,3 +1,4 @@
+#include "cgraph/alg.h"
 #include "cgraph/iter.h"
 #include "struct/pairing_heap.h"
 #include "struct/queue.h"

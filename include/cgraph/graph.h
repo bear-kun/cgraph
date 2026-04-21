@@ -25,7 +25,4 @@ CGraphId cgraphWhereEdgeTo(const CGraph *graph, CGraphId eid);
 void cgraphSetVertResizeCallback(CGraph *graph, CGraphResizeCallback callback);
 void cgraphSetEdgeResizeCallback(CGraph *graph, CGraphResizeCallback callback);
 
-void cgraphTraverseEdges(const CGraph *graph, void *userData,
-                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
-
 #endif // GRAPH_GRAPH_H

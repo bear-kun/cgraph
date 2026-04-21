@@ -1,3 +1,4 @@
+#include "cgraph/alg.h"
 #include "cgraph/graph.h"
 #include "cgraph/iter.h"
 #include "struct/stack.h"

@@ -3,17 +3,16 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <float.h>
 
 #define INVALID_ID (-1)
-#define CGRAPH_INF INT64_MAX
+#define CGRAPH_INF DBL_MAX
 
 typedef bool CGraphBool;
 typedef int64_t CGraphInt;
 typedef int64_t CGraphId;
 typedef uint64_t CGraphSize;
-typedef int64_t WeightType;
-typedef WeightType TimeType; // aoa
-typedef WeightType FlowType; // flow
+typedef double WeightType;
 
 typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 
@@ -21,6 +20,7 @@ typedef struct {
   CGraphSize vertCap, vertNum;
   CGraphId vertRange, vertFree;
   CGraphId vertHead, *vertNext;
+  CGraphInt *indegree, *outdegree;
   CGraphResizeCallback vertResize;
 
   CGraphBool directed;

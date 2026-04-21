@@ -1,20 +1,16 @@
-#include "cgraph/graph.h"
+#include "cgraph/alg.h"
 #include "cgraph/iter.h"
 #include "struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 
-static void callback(CGraphId from, CGraphId eid, const CGraphId to,
-                     void *userdata) {
-  const CGraphInt *indegree = *(void **)userdata;
-  CGraphQueue *queue = *((void **)userdata + 1);
-  if (indegree[to] == 0) cgraphQueuePush(queue, to);
-}
-
-static void indegreeInitQueue(const CGraph *graph,
-                              const CGraphInt indegree[], CGraphQueue *queue) {
-  void *userData[] = {(void *)indegree, queue};
-  cgraphTraverseEdges(graph, userData, callback);
+static void indegreeInitQueue(const CGraph *graph, const CGraphInt indegree[],
+                              CGraphQueue *queue) {
+  CGraphId vid;
+  CGraphIterLite vertices = cgraphGetVertIter(graph);
+  while (cgraphIterLiteNextVert(&vertices, &vid)) {
+    if (indegree[vid] == 0) cgraphQueuePush(queue, vid);
+  }
 }
 
 typedef struct {
@@ -60,28 +56,27 @@ static void backward(const Package *pkg, const CGraphId *const begin,
   } while (p != begin);
 }
 
-static void init(Package *pkg, const CGraph *graph,
-                 const CGraphInt indegree[]) {
+static void init(Package *pkg, const CGraph *graph) {
   const CGraphSize vertRange = graph->vertRange;
 
   pkg->queue = cgraphQueueCreate(vertRange);
-  indegreeInitQueue(graph, pkg->indegree, pkg->queue);
   pkg->indegree = malloc(vertRange * sizeof(CGraphInt));
-  memcpy(pkg->indegree, indegree, vertRange * sizeof(CGraphInt));
+  memcpy(pkg->indegree, graph->indegree, vertRange * sizeof(CGraphInt));
   memset(pkg->earlyStart, 0, vertRange * sizeof(TimeType));
   memset(pkg->successor, INVALID_ID, vertRange * sizeof(CGraphId));
   for (CGraphId i = 0; i < vertRange; i++) pkg->lateStart[i] = CGRAPH_INF;
+  indegreeInitQueue(graph, pkg->indegree, pkg->queue);
 }
 
-void cgraphCriticalPath(const CGraph *aoa, const CGraphInt indegree[],
-                        const TimeType duration[], CGraphId successor[],
-                        TimeType earlyStart[], TimeType lateStart[]) {
+void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[],
+                        CGraphId successor[], TimeType earlyStart[],
+                        TimeType lateStart[]) {
   Package pkg;
   pkg.duration = duration;
   pkg.earlyStart = earlyStart;
   pkg.lateStart = lateStart;
   pkg.successor = successor;
-  init(&pkg, aoa, indegree);
+  init(&pkg, aoa);
 
   forward(&pkg);
 

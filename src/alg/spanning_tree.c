@@ -1,4 +1,4 @@
-#include "cgraph/graph.h"
+#include "cgraph/alg.h"
 #include "cgraph/iter.h"
 #include "struct/disjoint_set.h"
 #include "struct/heap.h"

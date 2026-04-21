@@ -2,39 +2,40 @@
 #define GRAPH_ALG_H
 
 #include "types.h"
-#include "struct/linked_list.h"
 
-void cgraphCriticalPath(const CGraph *aoa, const CGraphInt indegree[],
-                        const TimeType duration[], CGraphId successor[],
-                        TimeType earlyStart[], TimeType lateStart[]);
+typedef WeightType TimeType; // aoa
+typedef WeightType FlowType; // flow
+
+void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[],
+                        CGraphId successor[], TimeType earlyStart[],
+                        TimeType lateStart[]);
 
 // path: src -> ... -> dst
 void cgraphEulerCircuit(const CGraph *graph, CGraphId path[], CGraphId src);
 void cgraphEulerPath(const CGraph *graph, CGraphId path[], CGraphId src,
                      CGraphId dst);
 
-void cgraphArticulation(const CGraph *graph, CGraphLinkedNode **articulations);
+// return count of articulations
+// free(*articulation) to release
+CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations);
 
 // Strongly Connected Components
 // return ComponentID * V
 void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]);
 
 FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
-                                  const FlowType capacity[],
-                                  FlowType flow[], CGraphId source,
-                                  CGraphId sink);
+                                  const FlowType capacity[], FlowType flow[],
+                                  CGraphId source, CGraphId sink);
 
+// only undirected-graph
 void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[],
                             CGraphId predecessor[], CGraphId root);
-
 void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[],
                                CGraphId edges[]);
 
-void cgraphTopoSort(const CGraph *graph, const CGraphInt indegree[],
-                    CGraphId sort[]);
+void cgraphTopoSort(const CGraph *graph, CGraphId sort[]);
 
-void cgraphTopoPath(const CGraph *graph, const CGraphInt indegree[],
-                    CGraphId predecessor[]);
+void cgraphTopoPath(const CGraph *graph, CGraphId predecessor[]);
 
 void cgraphUnweightedShortest(const CGraph *graph, CGraphId predecessor[],
                               CGraphId source, CGraphId target);

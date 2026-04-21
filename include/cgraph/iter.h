@@ -19,4 +19,7 @@ CGraphIterLite cgraphGetEdgeIter(const CGraph *graph, CGraphId from);
 CGraphBool cgraphIterLiteNextVert(CGraphIterLite *iter, CGraphId *vid);
 CGraphBool cgraphIterLiteNextEdge(CGraphIterLite *iter, CGraphId *eid, CGraphId *to);
 
+void cgraphTraverseEdges(const CGraph *graph, void *userData,
+                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
+
 #endif // GRAPH_ITER_H

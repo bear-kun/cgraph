@@ -1,26 +1,22 @@
-#include "cgraph/graph.h"
+#include "cgraph/alg.h"
 #include "cgraph/iter.h"
 #include "struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 
-static void callback(CGraphId from, CGraphId eid, CGraphId to, void *userdata) {
-  const CGraphInt *indegree = *(void **)userdata;
-  CGraphQueue *queue = *((void **)userdata + 1);
-  if (indegree[to] == 0) cgraphQueuePush(queue, to);
+static void indegreeInitQueue(const CGraph *graph, const CGraphInt indegree[],
+                              CGraphQueue *queue) {
+  CGraphId vid;
+  CGraphIterLite vertices = cgraphGetVertIter(graph);
+  while (cgraphIterLiteNextVert(&vertices, &vid)) {
+    if (indegree[vid] == 0) cgraphQueuePush(queue, vid);
+  }
 }
 
-static void indegreeInitQueue(const CGraph *graph,
-                              const CGraphInt indegree[], CGraphQueue *queue) {
-  void *userData[] = {(void *)indegree, queue};
-  cgraphTraverseEdges(graph, userData, callback);
-}
-
-void cgraphTopoPath(const CGraph *const graph, const CGraphInt indegree[],
-                    CGraphId predecessor[]) {
+void cgraphTopoPath(const CGraph *const graph, CGraphId predecessor[]) {
   CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
-  CGraphInt *copiedIndegree = malloc(graph->vertRange * sizeof(CGraphInt));
-  memcpy(copiedIndegree, indegree, graph->vertRange * sizeof(CGraphInt));
+  CGraphInt *indegree = malloc(graph->vertRange * sizeof(CGraphInt));
+  memcpy(indegree, graph->indegree, graph->vertRange * sizeof(CGraphInt));
   memset(predecessor, INVALID_ID, graph->vertRange * sizeof(CGraphId));
   indegreeInitQueue(graph, indegree, queue);
 
@@ -33,7 +29,7 @@ void cgraphTopoPath(const CGraph *const graph, const CGraphInt indegree[],
     CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
     while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
       if (predecessor[to] == -1) predecessor[to] = from;
-      if (--copiedIndegree[to] == 0) cgraphQueuePush(queue, to);
+      if (--indegree[to] == 0) cgraphQueuePush(queue, to);
     }
   }
 
@@ -41,15 +37,14 @@ void cgraphTopoPath(const CGraph *const graph, const CGraphInt indegree[],
     /* ERROR: 圈 */
   }
 
-  free(copiedIndegree);
+  free(indegree);
   cgraphQueueRelease(queue);
 }
 
-void cgraphTopoSort(const CGraph *const graph, const CGraphInt indegree[],
-                    CGraphId sort[]) {
+void cgraphTopoSort(const CGraph *const graph, CGraphId sort[]) {
   CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
-  CGraphInt *copiedIndegree = malloc(graph->vertRange * sizeof(CGraphInt));
-  memcpy(copiedIndegree, indegree, graph->vertRange * sizeof(CGraphInt));
+  CGraphInt *indegree = malloc(graph->vertRange * sizeof(CGraphInt));
+  memcpy(indegree, graph->indegree, graph->vertRange * sizeof(CGraphInt));
   indegreeInitQueue(graph, indegree, queue);
 
   CGraphInt counter = 0;
@@ -60,7 +55,7 @@ void cgraphTopoSort(const CGraph *const graph, const CGraphInt indegree[],
     CGraphId eid, to;
     CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
     while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
-      if (--copiedIndegree[to] == 0) cgraphQueuePush(queue, to);
+      if (--indegree[to] == 0) cgraphQueuePush(queue, to);
     }
   }
 
@@ -68,6 +63,6 @@ void cgraphTopoSort(const CGraph *const graph, const CGraphInt indegree[],
     /* ERROR: 圈 */
   }
 
-  free(copiedIndegree);
+  free(indegree);
   cgraphQueueRelease(queue);
 }
