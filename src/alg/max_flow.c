@@ -84,16 +84,22 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
   CGraph residual;
   cgraphCopy(&residual, network);
   CGraphQueue *queue = cgraphQueueCreate(network->vertNum);
-  CGraphId *pred = malloc(network->vertRange * sizeof(CGraphId));
-  FlowType *curr = calloc(network->edgeRange, sizeof(FlowType));
   memset(flow, 0, network->edgeRange * sizeof(FlowType));
 
-  const Package pkg = {network, &residual, source, sink,
-                       pred, capacity, curr, flow};
+  const Package pkg = {
+    .network = network,
+    .residual = &residual,
+    .src = source,
+    .sink = sink,
+    .pred = malloc(network->vertRange * sizeof(CGraphId)),
+    .cap = capacity,
+    .curr = calloc(network->edgeRange, sizeof(FlowType)),
+    .flow = flow,
+  };
 
   FlowType maxFlow = 0;
   while (true) {
-    memset(pred, INVALID_ID, network->vertRange * sizeof(CGraphId));
+    memset(pkg.pred, INVALID_ID, network->vertRange * sizeof(CGraphId));
     if (!bfs(&pkg, queue)) break;
 
     const FlowType step = pathFlow(&pkg);
@@ -101,8 +107,8 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
     maxFlow += step;
   }
 
-  free(pred);
-  free(curr);
+  free(pkg.pred);
+  free(pkg.curr);
   cgraphRelease(&residual);
   cgraphQueueRelease(queue);
   return maxFlow;

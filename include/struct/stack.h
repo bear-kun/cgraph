@@ -5,7 +5,7 @@
 
 typedef struct {
   CGraphSize size;
-  CGraphId elems[0];
+  CGraphId elems[];
 } CGraphStack;
 
 CGraphStack *cgraphStackCreate(CGraphSize capacity);

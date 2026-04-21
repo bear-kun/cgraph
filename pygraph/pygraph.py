@@ -1,4 +1,5 @@
 import ctypes
+import numpy
 
 cgraph = ctypes.CDLL('./cgraph.dll')
 
@@ -10,6 +11,7 @@ c_int_t = ctypes.c_int64
 c_id_t = ctypes.c_int64
 c_size_t = ctypes.c_uint64
 c_resize_cb_t = ctypes.CFUNCTYPE(c_void, c_size_t, c_size_t)
+c_weight_t = ctypes.c_double
 
 
 class CGraph(ctypes.Structure):
@@ -17,6 +19,7 @@ class CGraph(ctypes.Structure):
         ('vert_cap', c_size_t), ('vert_num', c_size_t),
         ('vert_range', c_id_t), ('vert_free', c_id_t),
         ('vert_head', c_id_t), ('vert_next', c_ptr(c_id_t)),
+        ('indegree', c_ptr(c_int_t)), ('outdegree', c_ptr(c_int_t)),
         ('vert_resize', c_resize_cb_t),
 
         ('directed', c_bool_t),
@@ -89,10 +92,24 @@ cgraph_iter_lite_next_edge.argtypes = (c_ptr(CGraphIterLite), c_ptr(c_id_t), c_p
 # Algorithm
 cgraph_euler_path = cgraph.cgraphEulerCircuit
 cgraph_euler_path.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t)
+cgraph_articulations = cgraph.cgraphArticulations
+cgraph_articulations.restype = c_int_t
+cgraph_articulations.argtypes = (c_graph_ptr, c_ptr(c_ptr(c_id_t)))
 cgraph_strongly_connected = cgraph.cgraphStronglyConnected
 cgraph_strongly_connected.argtypes = (c_graph_ptr, c_ptr(c_id_t))
+cgraph_max_flow_edmonds_karp = cgraph.cgraphMaxFlowEdmondsKarp
+cgraph_max_flow_edmonds_karp.restype = c_weight_t
+cgraph_max_flow_edmonds_karp.argtypes = (c_graph_ptr, c_ptr(c_weight_t), c_ptr(c_weight_t), c_id_t, c_id_t)
+cgraph_spanning_tree_kruskal = cgraph.cgraphSpanningTreeKruskal
+cgraph_spanning_tree_kruskal.argtypes = (c_graph_ptr, c_ptr(c_weight_t), c_ptr(c_id_t))
+cgraph_topo_sort = cgraph.cgraphTopoSort
+cgraph_topo_sort.argtypes = (c_graph_ptr, c_ptr(c_id_t))
 cgraph_unweighted_shortest = cgraph.cgraphUnweightedShortest
 cgraph_unweighted_shortest.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t, c_id_t)
+cgraph_shortest_dijkstra = cgraph.cgraphShortestDijkstra
+cgraph_shortest_dijkstra.argtypes = (c_graph_ptr, c_ptr(c_weight_t), c_ptr(c_id_t), c_id_t, c_id_t)
+cgraph_shortest_bellman_ford = cgraph.cgraphShortestBellmanFord
+cgraph_shortest_bellman_ford.argtypes = (c_graph_ptr, c_ptr(c_weight_t), c_ptr(c_id_t), c_id_t)
 
 
 class GraphEdges:
@@ -124,6 +141,9 @@ class GraphVertices:
         if cgraph_iter_lite_next_vert(c_ref(self.__iter), c_ref(vid)):
             return vid.value, GraphEdges(self.__cg_ptr, vid)
         raise StopIteration
+
+
+_numpy2ctypes = numpy.ctypeslib.as_ctypes
 
 
 class Graph:
@@ -186,12 +206,50 @@ class Graph:
     def edges(self, vid):
         return GraphEdges(self.__cg_ptr, vid)
 
-    def euler_path(self, from_vid, to_vid):
-        path = (c_id_t * self.__cgraph.edge_num)()
-        cgraph_euler_path(self.__cg_ptr, path, from_vid, to_vid)
-        return list(path)
+    def euler_path(self, source, target):
+        path = numpy.empty(self.edge_num + 1, dtype=numpy.dtype(c_id_t))
+        cgraph_euler_path(self.__cg_ptr, _numpy2ctypes(path), source, target)
+        return path
+
+    def articulations(self):
+        arts = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        c_ptr2 = ctypes.pointer(_numpy2ctypes(arts))
+        count = cgraph_articulations(self.__cg_ptr, c_ptr2)
+        arts.resize(count)
+        return arts
 
     def strongly_connected(self):
-        components = (c_id_t * self.__cgraph.vert_num)()
-        cgraph_strongly_connected(self.__cg_ptr, components)
-        return list(components)
+        components = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        cgraph_strongly_connected(self.__cg_ptr, _numpy2ctypes(components))
+        return components
+
+    def max_flow(self, capacity, source, sink):
+        flow = numpy.empty(self.edge_num, dtype=numpy.dtype(c_weight_t))
+        max_flow = cgraph_max_flow_edmonds_karp(self.__cg_ptr,
+                                                _numpy2ctypes(capacity), _numpy2ctypes(flow), source, sink)
+        return max_flow, flow
+
+    def spanning_tree(self, weights):
+        edges = numpy.empty(self.vert_num - 1, dtype=numpy.dtype(c_id_t))
+        cgraph_spanning_tree_kruskal(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(edges))
+        return edges
+
+    def topo_sort(self):
+        sort = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        cgraph_topo_sort(self.__cg_ptr, _numpy2ctypes(sort))
+        return sort
+
+    def unweighted_shortest(self, weights, source, target):
+        pred = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        cgraph_unweighted_shortest(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
+        return pred
+
+    def shortest(self, weights, source, target=-1, mode='Dijkstra'):
+        pred = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        if mode == 'Dijkstra':
+            cgraph_shortest_dijkstra(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
+        elif mode == 'Bellman-Ford':
+            cgraph_shortest_bellman_ford(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source)
+        else:
+            raise NotImplementedError
+        return pred

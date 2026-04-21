@@ -45,6 +45,7 @@ static CGraphBool EulerPath_recursive(Package *pkg, const CGraphId from) {
   }
 }
 
+// todo: fix bug
 // 栈实现
 static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
                                   CGraphId from) {
@@ -66,10 +67,12 @@ static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
 
 void cgraphEulerPath(const CGraph *const graph, CGraphId path[],
                      const CGraphId src, const CGraphId dst) {
-  Package pkg = {.iter = cgraphGetIter(graph),
-                 .visited = calloc(graph->edgeRange, sizeof(CGraphBool)),
-                 .path = path + graph->edgeNum + 1,
-                 .currTgt = dst};
+  Package pkg = {
+      .iter = cgraphGetIter(graph),
+      .visited = calloc(graph->edgeRange, sizeof(CGraphBool)),
+      .path = path + graph->edgeNum + 1,
+      .currTgt = dst
+  };
 
   // if (!EulerPath_recursive(&pkg, src))
   CGraphStack *stack = cgraphStackCreate(graph->edgeNum);

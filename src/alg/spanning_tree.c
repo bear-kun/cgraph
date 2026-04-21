@@ -59,9 +59,9 @@ static void KruskalHeapInit(const CGraph *graph, CGraphHeap *heap) {
   cgraphHeapBuild(heap);
 }
 
-void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weight[],
+void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[],
                                CGraphId edges[]) {
-  CGraphHeap *heap = cgraphHeapCreate(graph->edgeNum, weight);
+  CGraphHeap *heap = cgraphHeapCreate(graph->edgeNum, weights);
   CGraphDisjointSet *disjointSet = cgraphDisjointCreate(graph->vertNum);
   KruskalHeapInit(graph, heap);
 

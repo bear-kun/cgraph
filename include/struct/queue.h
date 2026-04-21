@@ -6,7 +6,7 @@
 typedef struct {
   CGraphSize capacity, size;
   CGraphSize front, rear;
-  CGraphId elems[0];
+  CGraphId elems[];
 } CGraphQueue;
 
 CGraphQueue *cgraphQueueCreate(CGraphSize capacity);

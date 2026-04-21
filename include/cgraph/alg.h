@@ -15,8 +15,15 @@ void cgraphEulerCircuit(const CGraph *graph, CGraphId path[], CGraphId src);
 void cgraphEulerPath(const CGraph *graph, CGraphId path[], CGraphId src,
                      CGraphId dst);
 
-// return count of articulations
-// free(*articulation) to release
+/*
+  return count of articulations
+
+  if (*articulations == NULL) {
+    *articulations = new memory need to free;
+  } else {
+    *articulations need enough memory
+  }
+ */
 CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations);
 
 // Strongly Connected Components

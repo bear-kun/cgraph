@@ -13,8 +13,4 @@ typedef struct {
 void cgraphVectorRelease(const CGraphVector *vector);
 void cgraphVectorPush(CGraphVector *vector, CGraphId item);
 
-static CGraphId *cgraphVectorGetData(const CGraphVector *vector) {
-  return vector->elems;
-}
-
 #endif // GRAPH_LINKED_PATH_H

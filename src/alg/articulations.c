@@ -57,26 +57,34 @@ static void findArticulationStep(Package *pkg, const CGraphId from) {
 }
 
 CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations) {
-  CGraphIter *iter = cgraphGetIter(graph);
-  Vertex *vertices = calloc(graph->vertRange, sizeof(Vertex));
-  Package pkg = {iter, vertices, 0, cgraphVectorCreate()};
-  const CGraphId root = iter->vertCurr;
+  Package pkg = {
+    .iter = cgraphGetIter(graph),
+    .vertices = calloc(graph->vertRange, sizeof(Vertex)),
+    .topo = 0,
+    .arts = cgraphVectorCreate()
+  };
+  if (*articulations) {
+    pkg.arts.capacity = graph->vertCap;
+    pkg.arts.elems = *articulations;
+  }
+
+  const CGraphId root = pkg.iter->vertCurr;
   findArticulationStep(&pkg, root);
 
   // 若根节点有两个及以上的子树，则为割点
   CGraphId eid, to;
   unsigned children = 0;
-  cgraphIterResetEdge(iter, root);
-  while (cgraphIterNextEdge(iter, root, &eid, &to)) {
-    if (vertices[to].pred == vertices + root && ++children == 2) {
+  cgraphIterResetEdge(pkg.iter, root);
+  while (cgraphIterNextEdge(pkg.iter, root, &eid, &to)) {
+    if (pkg.vertices[to].pred == pkg.vertices + root && ++children == 2) {
       cgraphVectorPush(&pkg.arts, root);
       break;
     }
   }
 
-  free(vertices);
-  cgraphIterRelease(iter);
+  free(pkg.vertices);
+  cgraphIterRelease(pkg.iter);
 
-  *articulations = cgraphVectorGetData(&pkg.arts);
+  *articulations = pkg.arts.elems;
   return (CGraphInt)pkg.arts.size;
 }
