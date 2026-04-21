@@ -15,7 +15,3 @@ endif ()
 add_library(cgraph SHARED ${CORE_SOURCES} ${ALG_SOURCES})
 target_include_directories(cgraph PRIVATE include)
 set_target_properties(cgraph PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-
-add_executable(cgraph_test test/test.c)
-target_include_directories(cgraph_test PRIVATE include)
-target_link_libraries(cgraph_test PRIVATE cgraph)
