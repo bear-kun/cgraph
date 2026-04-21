@@ -1,6 +1,8 @@
 #include "cgraph/alg.h"
 #include "cgraph/iter.h"
 #include "struct/stack.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 
 /*
@@ -16,7 +18,7 @@ typedef struct {
   CGraphIter *iter;
   CGraphBool *visited;
   CGraphId *path;
-  CGraphId currTgt; // 当前回环或路径的临时目标点target
+  CGraphId target; // 当前回环或路径的临时目标点target
   CGraphId to;
 } Package;
 
@@ -33,7 +35,11 @@ static CGraphBool getTargetEdge(Package *pkg, const CGraphId from) {
 
 static inline CGraphBool insert(Package *pkg, const CGraphId from) {
   *--pkg->path = from;
-  return from == pkg->currTgt;
+  if (pkg->target == INVALID_ID) {
+    pkg->target = from;
+    return true;
+  }
+  return from == pkg->target;
 }
 
 // 递归实现
@@ -41,11 +47,10 @@ static CGraphBool EulerPath_recursive(Package *pkg, const CGraphId from) {
   while (1) {
     if (!getTargetEdge(pkg, from)) return insert(pkg, from);
     if (!EulerPath_recursive(pkg, pkg->to)) return false;
-    pkg->currTgt = from;
+    pkg->target = from;
   }
 }
 
-// todo: fix bug
 // 栈实现
 static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
                                   CGraphId from) {
@@ -61,20 +66,20 @@ static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
 
     if (cgraphStackEmpty(stack)) return true; // 结束
     from = cgraphStackPop(stack); // 返回
-    pkg->currTgt = from;
+    pkg->target = from;
   }
 }
 
-void cgraphEulerPath(const CGraph *const graph, CGraphId path[],
+void cgraphEulerianPath(const CGraph *const graph, CGraphId path[],
                      const CGraphId src, const CGraphId dst) {
   Package pkg = {
       .iter = cgraphGetIter(graph),
       .visited = calloc(graph->edgeRange, sizeof(CGraphBool)),
       .path = path + graph->edgeNum + 1,
-      .currTgt = dst
+      .target = dst
   };
 
-  // if (!EulerPath_recursive(&pkg, src))
+  // if (!EulerPath_recursive(&pkg, src)) {
   CGraphStack *stack = cgraphStackCreate(graph->edgeNum);
   if (!EulerPath_stack(&pkg, stack, src)) {
     *path = INVALID_ID;
@@ -85,7 +90,7 @@ void cgraphEulerPath(const CGraph *const graph, CGraphId path[],
   cgraphIterRelease(pkg.iter);
 }
 
-void cgraphEulerCircuit(const CGraph *const graph, CGraphId path[],
+void cgraphEulerianCircuit(const CGraph *const graph, CGraphId path[],
                         const CGraphId src) {
-  cgraphEulerPath(graph, path, src, src);
+  cgraphEulerianPath(graph, path, src, src);
 }

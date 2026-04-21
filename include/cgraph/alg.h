@@ -11,8 +11,8 @@ void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[],
                         TimeType lateStart[]);
 
 // path: src -> ... -> dst
-void cgraphEulerCircuit(const CGraph *graph, CGraphId path[], CGraphId src);
-void cgraphEulerPath(const CGraph *graph, CGraphId path[], CGraphId src,
+void cgraphEulerianCircuit(const CGraph *graph, CGraphId path[], CGraphId src);
+void cgraphEulerianPath(const CGraph *graph, CGraphId path[], CGraphId src,
                      CGraphId dst);
 
 /*

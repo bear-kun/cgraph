@@ -90,8 +90,8 @@ cgraph_iter_lite_next_edge.restype = c_bool_t
 cgraph_iter_lite_next_edge.argtypes = (c_ptr(CGraphIterLite), c_ptr(c_id_t), c_ptr(c_id_t))
 
 # Algorithm
-cgraph_euler_path = cgraph.cgraphEulerCircuit
-cgraph_euler_path.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t)
+cgraph_eulerian_path = cgraph.cgraphEulerianPath
+cgraph_eulerian_path.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t, c_id_t)
 cgraph_articulations = cgraph.cgraphArticulations
 cgraph_articulations.restype = c_int_t
 cgraph_articulations.argtypes = (c_graph_ptr, c_ptr(c_ptr(c_id_t)))
@@ -206,9 +206,9 @@ class Graph:
     def edges(self, vid):
         return GraphEdges(self.__cg_ptr, vid)
 
-    def euler_path(self, source, target):
+    def eulerian_path(self, source, target):
         path = numpy.empty(self.edge_num + 1, dtype=numpy.dtype(c_id_t))
-        cgraph_euler_path(self.__cg_ptr, _numpy2ctypes(path), source, target)
+        cgraph_eulerian_path(self.__cg_ptr, _numpy2ctypes(path), source, target)
         return path
 
     def articulations(self):
