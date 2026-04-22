@@ -43,17 +43,17 @@ static inline CGraphBool insert(Package *pkg, const CGraphId from) {
 }
 
 // 递归实现
-static CGraphBool EulerPath_recursive(Package *pkg, const CGraphId from) {
+static CGraphBool EulerianPath_recursive(Package *pkg, const CGraphId from) {
   while (1) {
     if (!getTargetEdge(pkg, from)) return insert(pkg, from);
-    if (!EulerPath_recursive(pkg, pkg->to)) return false;
+    if (!EulerianPath_recursive(pkg, pkg->to)) return false;
     pkg->target = from;
   }
 }
 
 // 栈实现
-static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
-                                  CGraphId from) {
+static CGraphBool EulerianPath_stack(Package *pkg, CGraphStack *stack,
+                                     CGraphId from) {
   while (1) {
     if (getTargetEdge(pkg, from)) {
       // 调用
@@ -70,8 +70,8 @@ static CGraphBool EulerPath_stack(Package *pkg, CGraphStack *stack,
   }
 }
 
-void cgraphEulerianPath(const CGraph *const graph, CGraphId path[],
-                     const CGraphId src, const CGraphId dst) {
+CGraphBool cgraphEulerianPath(const CGraph *const graph, CGraphId path[],
+                              const CGraphId src, const CGraphId dst) {
   Package pkg = {
       .iter = cgraphGetIter(graph),
       .visited = calloc(graph->edgeRange, sizeof(CGraphBool)),
@@ -79,18 +79,18 @@ void cgraphEulerianPath(const CGraph *const graph, CGraphId path[],
       .target = dst
   };
 
-  // if (!EulerPath_recursive(&pkg, src)) {
+  path[0] = INVALID_ID;
+  // const CGraphBool res = EulerianPath_recursive(&pkg, src);
   CGraphStack *stack = cgraphStackCreate(graph->edgeNum);
-  if (!EulerPath_stack(&pkg, stack, src)) {
-    *path = INVALID_ID;
-  }
+  const CGraphBool res = EulerianPath_stack(&pkg, stack, src);
 
   free(pkg.visited);
   cgraphStackRelease(stack);
   cgraphIterRelease(pkg.iter);
+  return res && path[0] != INVALID_ID;
 }
 
-void cgraphEulerianCircuit(const CGraph *const graph, CGraphId path[],
-                        const CGraphId src) {
-  cgraphEulerianPath(graph, path, src, src);
+CGraphBool cgraphEulerianCircuit(const CGraph *const graph, CGraphId path[],
+                                 const CGraphId src) {
+  return cgraphEulerianPath(graph, path, src, src);
 }

@@ -19,25 +19,29 @@ typedef struct {
   CGraphVector arts;
 } Package;
 
-static void findArticulationStep(Package *pkg, const CGraphId from) {
-  // 排除根节点，单独处理
+static void findArticulation(Package *pkg, const CGraphId from) {
   Vertex *vertex = pkg->vertices + from;
-  CGraphBool isArt = vertex->pred != NULL;
-  CGraphId eid, to;
-
-  vertex->visited = 1;
+  vertex->visited = true;
   vertex->lowest = vertex->preorder = pkg->topo++;
+
+  CGraphBool isArt = false;
+  CGraphSize child_count = 0;
+
+  CGraphId eid, to;
   while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
     Vertex *adjacent = pkg->vertices + to;
 
     if (!adjacent->visited) {
+      child_count++;
       adjacent->pred = vertex;
-      findArticulationStep(pkg, to);
+      findArticulation(pkg, to);
 
+      // 仅非根节点有效
       // 若target所在的圈不包含vertex,则vertex为割点
       // 使用isArt，只添加一次
-      if (adjacent->lowest >= vertex->preorder && !isArt) {
-        isArt = 1;
+      if (vertex->pred != NULL
+          && adjacent->lowest >= vertex->preorder && !isArt) {
+        isArt = true;
         cgraphVectorPush(&pkg->arts, from);
       }
 
@@ -54,32 +58,28 @@ static void findArticulationStep(Package *pkg, const CGraphId from) {
       vertex->lowest = adjacent->preorder;
     }
   }
+
+  // 根节点根据子树数量判断
+  if (vertex->pred == NULL && child_count >= 2) {
+    cgraphVectorPush(&pkg->arts, from);
+  }
 }
 
 CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations) {
   Package pkg = {
-    .iter = cgraphGetIter(graph),
-    .vertices = calloc(graph->vertRange, sizeof(Vertex)),
-    .topo = 0,
-    .arts = cgraphVectorCreate()
+      .iter = cgraphGetIter(graph),
+      .vertices = calloc(graph->vertRange, sizeof(Vertex)),
+      .topo = 0,
+      .arts = cgraphVectorCreate()
   };
   if (*articulations) {
     pkg.arts.capacity = graph->vertCap;
     pkg.arts.elems = *articulations;
   }
 
-  const CGraphId root = pkg.iter->vertCurr;
-  findArticulationStep(&pkg, root);
-
-  // 若根节点有两个及以上的子树，则为割点
-  CGraphId eid, to;
-  unsigned children = 0;
-  cgraphIterResetEdge(pkg.iter, root);
-  while (cgraphIterNextEdge(pkg.iter, root, &eid, &to)) {
-    if (pkg.vertices[to].pred == pkg.vertices + root && ++children == 2) {
-      cgraphVectorPush(&pkg.arts, root);
-      break;
-    }
+  CGraphId vid;
+  while (cgraphIterNextVert(pkg.iter, &vid)) {
+    if (!pkg.vertices[vid].visited) findArticulation(&pkg, vid);
   }
 
   free(pkg.vertices);

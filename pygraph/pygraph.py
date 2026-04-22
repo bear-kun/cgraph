@@ -91,6 +91,7 @@ cgraph_iter_lite_next_edge.argtypes = (c_ptr(CGraphIterLite), c_ptr(c_id_t), c_p
 
 # Algorithm
 cgraph_eulerian_path = cgraph.cgraphEulerianPath
+cgraph_eulerian_path.restype = c_bool_t
 cgraph_eulerian_path.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t, c_id_t)
 cgraph_articulations = cgraph.cgraphArticulations
 cgraph_articulations.restype = c_int_t
@@ -206,16 +207,17 @@ class Graph:
     def edges(self, vid):
         return GraphEdges(self.__cg_ptr, vid)
 
-    def eulerian_path(self, source, target):
+    def eulerian_path(self, source, target=-1):
         path = numpy.empty(self.edge_num + 1, dtype=numpy.dtype(c_id_t))
-        cgraph_eulerian_path(self.__cg_ptr, _numpy2ctypes(path), source, target)
+        if not cgraph_eulerian_path(self.__cg_ptr, _numpy2ctypes(path), source, target):
+            return None
         return path
 
     def articulations(self):
         arts = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
-        c_ptr2 = ctypes.pointer(_numpy2ctypes(arts))
+        c_ptr2 = ctypes.pointer(ctypes.cast(_numpy2ctypes(arts), c_ptr(c_id_t)))
         count = cgraph_articulations(self.__cg_ptr, c_ptr2)
-        arts.resize(count)
+        arts.resize(count, refcheck=False)
         return arts
 
     def strongly_connected(self):

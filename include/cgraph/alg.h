@@ -10,10 +10,11 @@ void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[],
                         CGraphId successor[], TimeType earlyStart[],
                         TimeType lateStart[]);
 
-// path: src -> ... -> dst
-void cgraphEulerianCircuit(const CGraph *graph, CGraphId path[], CGraphId src);
-void cgraphEulerianPath(const CGraph *graph, CGraphId path[], CGraphId src,
-                     CGraphId dst);
+// path: src -> ... -> dst | len = E + 1
+CGraphBool cgraphEulerianCircuit(const CGraph *graph, CGraphId path[],
+                                 CGraphId src);
+CGraphBool cgraphEulerianPath(const CGraph *graph, CGraphId path[],
+                              CGraphId src, CGraphId dst);
 
 /*
   return count of articulations
