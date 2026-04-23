@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void indegreeInitQueue(const CGraph *graph, const CGraphInt indegree[],
-                              CGraphQueue *queue) {
+static void indegreeInitQueue(const CGraph *graph, const CGraphInt indegree[], CGraphQueue *queue) {
   CGraphId vid;
   CGraphIterLite vertices = cgraphGetVertIter(graph);
   while (cgraphIterLiteNextVert(&vertices, &vid)) {
@@ -14,10 +13,10 @@ static void indegreeInitQueue(const CGraph *graph, const CGraphInt indegree[],
 }
 
 void cgraphTopoPath(const CGraph *const graph, CGraphId predecessor[]) {
-  CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
-  CGraphInt *indegree = malloc(graph->vertRange * sizeof(CGraphInt));
-  memcpy(indegree, graph->indegree, graph->vertRange * sizeof(CGraphInt));
-  memset(predecessor, INVALID_ID, graph->vertRange * sizeof(CGraphId));
+  CGraphQueue *queue = cgraphQueueCreate(graph->vert.count);
+  CGraphInt *indegree = malloc(graph->vert.range * sizeof(CGraphInt));
+  memcpy(indegree, graph->vert.indegree, graph->vert.range * sizeof(CGraphInt));
+  memset(predecessor, INVALID_ID, graph->vert.range * sizeof(CGraphId));
   indegreeInitQueue(graph, indegree, queue);
 
   CGraphInt counter = 0;
@@ -33,7 +32,7 @@ void cgraphTopoPath(const CGraph *const graph, CGraphId predecessor[]) {
     }
   }
 
-  if (counter != graph->vertNum) {
+  if (counter != graph->vert.count) {
     /* ERROR: 圈 */
   }
 
@@ -42,9 +41,9 @@ void cgraphTopoPath(const CGraph *const graph, CGraphId predecessor[]) {
 }
 
 void cgraphTopoSort(const CGraph *const graph, CGraphId sort[]) {
-  CGraphQueue *queue = cgraphQueueCreate(graph->vertNum);
-  CGraphInt *indegree = malloc(graph->vertRange * sizeof(CGraphInt));
-  memcpy(indegree, graph->indegree, graph->vertRange * sizeof(CGraphInt));
+  CGraphQueue *queue = cgraphQueueCreate(graph->vert.count);
+  CGraphInt *indegree = malloc(graph->vert.range * sizeof(CGraphInt));
+  memcpy(indegree, graph->vert.indegree, graph->vert.range * sizeof(CGraphInt));
   indegreeInitQueue(graph, indegree, queue);
 
   CGraphInt counter = 0;
@@ -59,7 +58,7 @@ void cgraphTopoSort(const CGraph *const graph, CGraphId sort[]) {
     }
   }
 
-  if (counter != graph->vertNum) {
+  if (counter != graph->vert.count) {
     /* ERROR: 圈 */
   }
 

@@ -52,8 +52,7 @@ static CGraphBool EulerianPath_recursive(Package *pkg, const CGraphId from) {
 }
 
 // 栈实现
-static CGraphBool EulerianPath_stack(Package *pkg, CGraphStack *stack,
-                                     CGraphId from) {
+static CGraphBool EulerianPath_stack(Package *pkg, CGraphStack *stack, CGraphId from) {
   while (1) {
     if (getTargetEdge(pkg, from)) {
       // 调用
@@ -70,18 +69,18 @@ static CGraphBool EulerianPath_stack(Package *pkg, CGraphStack *stack,
   }
 }
 
-CGraphBool cgraphEulerianPath(const CGraph *const graph, CGraphId path[],
-                              const CGraphId src, const CGraphId dst) {
+CGraphBool cgraphEulerianPath(const CGraph *graph, CGraphId path[], const CGraphId src,
+                              const CGraphId dst) {
   Package pkg = {
       .iter = cgraphGetIter(graph),
-      .visited = calloc(graph->edgeRange, sizeof(CGraphBool)),
-      .path = path + graph->edgeNum + 1,
+      .visited = calloc(graph->edge.range, sizeof(CGraphBool)),
+      .path = path + graph->edge.count + 1,
       .target = dst
   };
 
   path[0] = INVALID_ID;
   // const CGraphBool res = EulerianPath_recursive(&pkg, src);
-  CGraphStack *stack = cgraphStackCreate(graph->edgeNum);
+  CGraphStack *stack = cgraphStackCreate(graph->edge.count);
   const CGraphBool res = EulerianPath_stack(&pkg, stack, src);
 
   free(pkg.visited);
@@ -90,7 +89,6 @@ CGraphBool cgraphEulerianPath(const CGraph *const graph, CGraphId path[],
   return res && path[0] != INVALID_ID;
 }
 
-CGraphBool cgraphEulerianCircuit(const CGraph *const graph, CGraphId path[],
-                                 const CGraphId src) {
+CGraphBool cgraphEulerianCircuit(const CGraph *graph, CGraphId path[], const CGraphId src) {
   return cgraphEulerianPath(graph, path, src, src);
 }

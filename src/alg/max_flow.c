@@ -17,28 +17,27 @@ typedef struct {
   CGraphInt current, end;
 } ResidualIter;
 
-static void callback(const CGraphId from, const CGraphId eid, const CGraphId to,
-                     void *data) {
+static void callback(const CGraphId from, const CGraphId eid, const CGraphId to, void *data) {
   const Residual *residual = data;
   residual->edges[residual->edgeBegin[from + 1]++] = eid;
   residual->edges[residual->edgeBegin[to + 1]++] = ~eid;
 }
 
 static void residualInit(Residual *residual, const CGraph *network) {
-  residual->edgeBegin = malloc((network->vertRange + 1) * sizeof(CGraphInt));
-  residual->edges = malloc(2 * network->edgeRange * sizeof(CGraphId));
-  residual->edgeXor = malloc(network->edgeRange * sizeof(CGraphId));
+  residual->edgeBegin = malloc((network->vert.range + 1) * sizeof(CGraphInt));
+  residual->edges = malloc(2 * network->edge.range * sizeof(CGraphId));
+  residual->edgeXor = malloc(network->edge.range * sizeof(CGraphId));
 
   CGraphInt begin = 0;
   residual->edgeBegin[0] = 0;
-  for (CGraphInt v = 0; v < network->vertRange; v++) {
+  for (CGraphInt v = 0; v < network->vert.range; v++) {
     residual->edgeBegin[v + 1] = begin;
-    begin += network->indegree[v] + network->outdegree[v];
+    begin += network->vert.indegree[v] + network->vert.outdegree[v];
   }
   cgraphTraverseEdges(network, residual, callback);
 
-  for (CGraphId e = 0; e < network->edgeRange; e++) {
-    residual->edgeXor[e] = network->edgeFrom[e] ^ network->edgeTo[e];
+  for (CGraphId e = 0; e < network->edge.range; e++) {
+    residual->edgeXor[e] = network->edge.from[e] ^ network->edge.to[e];
   }
 }
 
@@ -48,8 +47,8 @@ static void residualRelease(const Residual *residual) {
   free(residual->edgeXor);
 }
 
-static void residualReverse(const Residual *residual, const CGraphId from,
-                            const CGraphId eid, const CGraphId to) {
+static void residualReverse(const Residual *residual, const CGraphId from, const CGraphId eid,
+                            const CGraphId to) {
   const CGraphInt end1 = residual->edgeBegin[from + 1];
   for (CGraphInt i = residual->edgeBegin[from]; i != end1; i++) {
     if (residual->edges[i] == eid) {
@@ -66,8 +65,7 @@ static void residualReverse(const Residual *residual, const CGraphId from,
   }
 }
 
-static ResidualIter residualGetIter(const Residual *residual,
-                                    const CGraphId from) {
+static ResidualIter residualGetIter(const Residual *residual, const CGraphId from) {
   ResidualIter iter;
   iter.residual = residual;
   iter.from = from;
@@ -76,8 +74,7 @@ static ResidualIter residualGetIter(const Residual *residual,
   return iter;
 }
 
-static CGraphBool residualIterNextEdge(ResidualIter *iter, CGraphId *eid,
-                                       CGraphId *to) {
+static CGraphBool residualIterNextEdge(ResidualIter *iter, CGraphId *eid, CGraphId *to) {
   while (iter->current != iter->end) {
     const CGraphId did = iter->residual->edges[iter->current++];
     if (did < 0) continue;
@@ -104,8 +101,7 @@ typedef struct {
   } bfs;
 } Package;
 
-static CGraphBool bfs(const Package *pkg, CGraphQueue *queue,
-                      const CGraphInt version) {
+static CGraphBool bfs(const Package *pkg, CGraphQueue *queue, const CGraphInt version) {
   pkg->bfs.version[pkg->source] = version;
 
   cgraphQueueClear(queue);
@@ -148,8 +144,7 @@ static void update(const Package *pkg, const FlowType step) {
     const CGraphId from = pkg->residual->edgeXor[eid] ^ to;
     pkg->flow.current[eid] += step;
 
-    if (pkg->flow.current[eid] >= pkg->flow.capacity[eid] *
-        (1 - CGRAPH_EPSILON)) {
+    if (pkg->flow.current[eid] >= pkg->flow.capacity[eid] * (1 - CGRAPH_EPSILON)) {
       pkg->flow.current[eid] = 0;
       pkg->flow.reverse[eid] = !pkg->flow.reverse[eid];
       residualReverse(pkg->residual, from, eid, to);
@@ -158,13 +153,12 @@ static void update(const Package *pkg, const FlowType step) {
   }
 }
 
-FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
-                                  const FlowType capacity[], FlowType flow[],
+FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network, const FlowType capacity[], FlowType flow[],
                                   const CGraphId source, const CGraphId sink) {
   Residual residual;
   residualInit(&residual, network);
-  CGraphQueue *queue = cgraphQueueCreate(network->vertNum);
-  memset(flow, 0, network->edgeRange * sizeof(FlowType));
+  CGraphQueue *queue = cgraphQueueCreate(network->vert.count);
+  memset(flow, 0, network->edge.range * sizeof(FlowType));
 
   const Package pkg = {
       .residual = &residual,
@@ -172,9 +166,9 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
       .sink = sink,
       .flow.capacity = capacity,
       .flow.current = flow,
-      .flow.reverse = calloc(network->edgeRange, sizeof(CGraphBool)),
-      .bfs.version = calloc(network->vertRange, sizeof(CGraphInt)),
-      .bfs.inedge = malloc(network->vertRange * sizeof(CGraphId)),
+      .flow.reverse = calloc(network->edge.range, sizeof(CGraphBool)),
+      .bfs.version = calloc(network->vert.range, sizeof(CGraphInt)),
+      .bfs.inedge = malloc(network->vert.range * sizeof(CGraphId)),
   };
 
   FlowType maxFlow = 0;
@@ -187,7 +181,7 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
     maxFlow += step;
   }
 
-  for (CGraphId e = 0; e < network->edgeRange; e++) {
+  for (CGraphId e = 0; e < network->edge.range; e++) {
     if (pkg.flow.reverse[e]) {
       flow[e] = capacity[e] - flow[e];
     }

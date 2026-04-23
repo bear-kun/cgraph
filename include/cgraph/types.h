@@ -21,18 +21,22 @@ typedef WeightType FlowType; // flow
 typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 
 typedef struct {
-  CGraphSize vertCap, vertNum;
-  CGraphId vertRange, vertFree;
-  CGraphId vertHead, *vertNext;
-  CGraphInt *indegree, *outdegree;
-  CGraphResizeCallback vertResize;
+  struct {
+    CGraphSize capacity, count;
+    CGraphId range, free;
+    CGraphId head, *next;
+    CGraphInt *indegree, *outdegree;
+    CGraphResizeCallback resize;
+  } vert;
 
-  CGraphBool directed;
-  CGraphSize edgeCap, edgeNum;
-  CGraphId edgeRange, edgeFree;
-  CGraphId *edgeHead, *edgeNext;
-  CGraphId *edgeFrom, *edgeTo;
-  CGraphResizeCallback edgeResize;
+  struct {
+    CGraphBool directed;
+    CGraphSize capacity, count;
+    CGraphId range, free;
+    CGraphId *head, *next;
+    CGraphId *from, *to;
+    CGraphResizeCallback resize;
+  } edge;
 } CGraph;
 
 typedef struct {

@@ -37,11 +37,11 @@ void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
   CGraph reverse;
   cgraphCopyVert(&reverse, graph);
   CGraphIter *iter = cgraphGetIter(graph);
-  CGraphStack *stack = cgraphStackCreate(graph->vertNum);
-  CGraphBool *flag = calloc(graph->vertRange, sizeof(CGraphBool));
+  CGraphStack *stack = cgraphStackCreate(graph->vert.count);
+  CGraphBool *flag = calloc(graph->vert.range, sizeof(CGraphBool));
   Package pkg = {&reverse, iter, stack, flag, components, 0};
-  memset(reverse.edgeHead, INVALID_ID, graph->vertRange * sizeof(CGraphId));
-  memset(components, INVALID_ID, graph->vertRange * sizeof(CGraphId));
+  memset(reverse.edge.head, INVALID_ID, graph->vert.range * sizeof(CGraphId));
+  memset(components, INVALID_ID, graph->vert.range * sizeof(CGraphId));
 
   // 正序
   CGraphId from;

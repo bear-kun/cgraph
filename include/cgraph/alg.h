@@ -3,15 +3,12 @@
 
 #include "types.h"
 
-void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[],
-                        CGraphId successor[], TimeType earlyStart[],
-                        TimeType lateStart[]);
+void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[], CGraphId successor[],
+                        TimeType earlyStart[], TimeType lateStart[]);
 
 // path: src -> ... -> dst | len = E + 1
-CGraphBool cgraphEulerianCircuit(const CGraph *graph, CGraphId path[],
-                                 CGraphId src);
-CGraphBool cgraphEulerianPath(const CGraph *graph, CGraphId path[],
-                              CGraphId src, CGraphId dst);
+CGraphBool cgraphEulerianCircuit(const CGraph *graph, CGraphId path[], CGraphId src);
+CGraphBool cgraphEulerianPath(const CGraph *graph, CGraphId path[], CGraphId src, CGraphId dst);
 
 /*
   return count of articulations
@@ -28,32 +25,29 @@ CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations);
 // return ComponentID * V
 void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]);
 
-FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
-                                  const FlowType capacity[], FlowType flow[],
+FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network, const FlowType capacity[], FlowType flow[],
                                   CGraphId source, CGraphId sink);
 
 // only undirected-graph
-void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[],
-                            CGraphId predecessor[], CGraphId root);
-void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[],
-                               CGraphId edges[]);
+void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[], CGraphId predecessor[],
+                            CGraphId root);
+void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[], CGraphId edges[]);
 
 void cgraphTopoSort(const CGraph *graph, CGraphId sort[]);
 
 void cgraphTopoPath(const CGraph *graph, CGraphId predecessor[]);
 
-void cgraphUnweightedShortest(const CGraph *graph, CGraphId predecessor[],
-                              CGraphId source, CGraphId target);
+void cgraphUnweightedShortest(const CGraph *graph, CGraphId predecessor[], CGraphId source,
+                              CGraphId target);
 
-void cgraphShortestDijkstra(const CGraph *graph, const WeightType weights[],
-                            CGraphId predecessor[], CGraphId source,
-                            CGraphId target);
+void cgraphShortestDijkstra(const CGraph *graph, const WeightType weights[], CGraphId predecessor[],
+                            CGraphId source, CGraphId target);
 
 void cgraphShortestBellmanFord(const CGraph *graph, const WeightType weights[],
                                CGraphId predecessor[], CGraphId source);
 
 // matrix
-void FloydWarshallWeightedPath(WeightType **weight, CGraphSize vertNum,
-                               CGraphId **path, WeightType **distance);
+void FloydWarshallWeightedPath(WeightType **weight, CGraphSize vertNum, CGraphId **path,
+                               WeightType **distance);
 
 #endif // GRAPH_ALG_H

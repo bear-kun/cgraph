@@ -6,8 +6,8 @@
  * 原理：对路径经过的顶点动态规划
  */
 
-void FloydWarshallWeightedPath(WeightType **weight, const CGraphSize vertNum,
-                               CGraphId **path, WeightType **distance) {
+void FloydWarshallWeightedPath(WeightType **weight, const CGraphSize vertNum, CGraphId **path,
+                               WeightType **distance) {
   for (CGraphId i = 0; i < vertNum; i++) {
     for (CGraphId j = 0; j < vertNum; j++) {
       distance[i][j] = weight[i][j];
@@ -21,10 +21,8 @@ void FloydWarshallWeightedPath(WeightType **weight, const CGraphSize vertNum,
       for (CGraphId target = 0; target < vertNum; ++target) {
         if (distance[middle][target] == CGRAPH_INF) continue;
 
-        if (distance[source][middle] + distance[middle][target] <
-            distance[source][target]) {
-          distance[source][target] =
-              distance[source][middle] + distance[middle][target];
+        if (distance[source][middle] + distance[middle][target] < distance[source][target]) {
+          distance[source][target] = distance[source][middle] + distance[middle][target];
           path[source][target] = middle;
         }
       }

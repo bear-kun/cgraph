@@ -5,12 +5,12 @@
 #include "struct/pairing_heap.h"
 #include <stdlib.h>
 
-void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[],
-                            CGraphId predecessor[], const CGraphId root) {
-  CGraphBool *visited = calloc(graph->vertRange, sizeof(CGraphBool));
-  WeightType *minWeight = malloc(graph->vertRange * sizeof(WeightType));
-  CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vertNum, minWeight);
-  for (CGraphId i = 0; i < graph->vertRange; i++) minWeight[i] = CGRAPH_INF;
+void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[], CGraphId predecessor[],
+                            const CGraphId root) {
+  CGraphBool *visited = calloc(graph->vert.range, sizeof(CGraphBool));
+  WeightType *minWeight = malloc(graph->vert.range * sizeof(WeightType));
+  CGraphPairingHeap *heap = cgraphPairingHeapCreate(graph->vert.count, minWeight);
+  for (CGraphId i = 0; i < graph->vert.range; i++) minWeight[i] = CGRAPH_INF;
 
   visited[root] = true;
   predecessor[root] = INVALID_ID;
@@ -40,8 +40,7 @@ void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[],
   cgraphPairingHeapRelease(heap);
 }
 
-static void callback(CGraphId from, const CGraphId eid, CGraphId to,
-                     void *userData) {
+static void callback(CGraphId from, const CGraphId eid, CGraphId to, void *userData) {
   CGraphHeap *heap = *(void **)userData;
   CGraphBool *isInHeap = *((void **)userData + 1);
   // 去除反向边
@@ -52,31 +51,30 @@ static void callback(CGraphId from, const CGraphId eid, CGraphId to,
 }
 
 static void KruskalHeapInit(const CGraph *graph, CGraphHeap *heap) {
-  CGraphBool *isInHeap = calloc(graph->edgeRange, sizeof(CGraphBool));
+  CGraphBool *isInHeap = calloc(graph->edge.range, sizeof(CGraphBool));
   void *userData[] = {heap, isInHeap};
   cgraphTraverseEdges(graph, userData, callback);
   free(isInHeap);
   cgraphHeapBuild(heap);
 }
 
-void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[],
-                               CGraphId edges[]) {
-  CGraphHeap *heap = cgraphHeapCreate(graph->edgeNum, weights);
-  CGraphDisjointSet *disjointSet = cgraphDisjointCreate(graph->vertNum);
+void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[], CGraphId edges[]) {
+  CGraphHeap *heap = cgraphHeapCreate(graph->edge.count, weights);
+  CGraphDisjointSet *disjointSet = cgraphDisjointCreate(graph->vert.count);
   KruskalHeapInit(graph, heap);
 
   CGraphSize counter = 0;
   while (!cgraphHeapEmpty(heap)) {
     const CGraphId eid = cgraphHeapPop(heap);
-    const CGraphId cls1 = cgraphDisjointFind(disjointSet, graph->edgeFrom[eid]);
-    const CGraphId cls2 = cgraphDisjointFind(disjointSet, graph->edgeTo[eid]);
+    const CGraphId cls1 = cgraphDisjointFind(disjointSet, graph->edge.from[eid]);
+    const CGraphId cls2 = cgraphDisjointFind(disjointSet, graph->edge.to[eid]);
 
     if (cls1 != cls2) {
       edges[counter++] = eid;
       cgraphDisjointUnion(disjointSet, cls1, cls2);
     }
   }
-  if (counter != graph->vertNum - 1) {
+  if (counter != graph->vert.count - 1) {
     // No spanning tree
   }
 

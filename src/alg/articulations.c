@@ -39,8 +39,7 @@ static void findArticulation(Package *pkg, const CGraphId from) {
       // 仅非根节点有效
       // 若target所在的圈不包含vertex,则vertex为割点
       // 使用isArt，只添加一次
-      if (vertex->pred != NULL
-          && adjacent->lowest >= vertex->preorder && !isArt) {
+      if (vertex->pred != NULL && adjacent->lowest >= vertex->preorder && !isArt) {
         isArt = true;
         cgraphVectorPush(&pkg->arts, from);
       }
@@ -68,12 +67,12 @@ static void findArticulation(Package *pkg, const CGraphId from) {
 CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations) {
   Package pkg = {
       .iter = cgraphGetIter(graph),
-      .vertices = calloc(graph->vertRange, sizeof(Vertex)),
+      .vertices = calloc(graph->vert.range, sizeof(Vertex)),
       .topo = 0,
       .arts = cgraphVectorCreate()
   };
   if (*articulations) {
-    pkg.arts.capacity = graph->vertCap;
+    pkg.arts.capacity = graph->vert.capacity;
     pkg.arts.elems = *articulations;
   }
 

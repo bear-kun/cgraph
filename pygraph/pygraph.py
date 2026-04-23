@@ -15,19 +15,27 @@ c_weight_t = ctypes.c_double
 
 
 class CGraph(ctypes.Structure):
-    _fields_ = [
-        ('vert_cap', c_size_t), ('vert_num', c_size_t),
-        ('vert_range', c_id_t), ('vert_free', c_id_t),
-        ('vert_head', c_id_t), ('vert_next', c_ptr(c_id_t)),
-        ('indegree', c_ptr(c_int_t)), ('outdegree', c_ptr(c_int_t)),
-        ('vert_resize', c_resize_cb_t),
+    class _Vertices(ctypes.Structure):
+        _fields_ = [
+            ('capacity', c_size_t), ('count', c_size_t),
+            ('range', c_id_t), ('free', c_id_t),
+            ('head', c_id_t), ('next', c_ptr(c_id_t)),
+            ('indegree', c_ptr(c_int_t)), ('outdegree', c_ptr(c_int_t)),
+            ('resize', c_resize_cb_t)
+        ]
 
-        ('directed', c_bool_t),
-        ('edge_cap', c_size_t), ('edge_num', c_size_t),
-        ('edge_range', c_id_t), ('edge_free', c_id_t),
-        ('edge_head', c_ptr(c_id_t)), ('edge_next', c_ptr(c_id_t)),
-        ('edge_from', c_ptr(c_id_t)), ('edge_to', c_ptr(c_id_t)),
-        ('edge_resize', c_resize_cb_t),
+    class _Edges(ctypes.Structure):
+        _fields_ = [
+            ('directed', c_bool_t),
+            ('capacity', c_size_t), ('count', c_size_t),
+            ('range', c_id_t), ('free', c_id_t),
+            ('head', c_ptr(c_id_t)), ('next', c_ptr(c_id_t)),
+            ('from', c_ptr(c_id_t)), ('to', c_ptr(c_id_t)),
+            ('resize', c_resize_cb_t)
+        ]
+
+    _fields_ = [
+        ('vert', _Vertices), ('edge', _Edges)
     ]
 
 
@@ -162,12 +170,12 @@ class Graph:
         self.release()
 
     @property
-    def vert_num(self):
-        return self.__cgraph.vert_num
+    def vert_count(self):
+        return self.__cgraph.vert.count
 
     @property
-    def edge_num(self):
-        return self.__cgraph.edge_num
+    def edge_count(self):
+        return self.__cgraph.edge.count
 
     def copy(self):
         graph = Graph()
@@ -208,46 +216,46 @@ class Graph:
         return GraphEdges(self.__cg_ptr, vid)
 
     def eulerian_path(self, source, target=-1):
-        path = numpy.empty(self.edge_num + 1, dtype=numpy.dtype(c_id_t))
+        path = numpy.empty(self.__cgraph.edge.count + 1, dtype=numpy.dtype(c_id_t))
         if not cgraph_eulerian_path(self.__cg_ptr, _numpy2ctypes(path), source, target):
             return None
         return path
 
     def articulations(self):
-        arts = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        arts = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
         c_ptr2 = ctypes.pointer(ctypes.cast(_numpy2ctypes(arts), c_ptr(c_id_t)))
         count = cgraph_articulations(self.__cg_ptr, c_ptr2)
         arts.resize(count, refcheck=False)
         return arts
 
     def strongly_connected(self):
-        components = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        components = numpy.empty(self.__cgraph.vert.range, dtype=numpy.dtype(c_id_t))
         cgraph_strongly_connected(self.__cg_ptr, _numpy2ctypes(components))
         return components
 
     def max_flow(self, capacity, source, sink):
-        flow = numpy.empty(self.edge_num, dtype=numpy.dtype(c_weight_t))
+        flow = numpy.empty(self.__cgraph.edge.count, dtype=numpy.dtype(c_weight_t))
         max_flow = cgraph_max_flow_edmonds_karp(self.__cg_ptr,
                                                 _numpy2ctypes(capacity), _numpy2ctypes(flow), source, sink)
         return max_flow, flow
 
     def spanning_tree(self, weights):
-        edges = numpy.empty(self.vert_num - 1, dtype=numpy.dtype(c_id_t))
+        edges = numpy.empty(self.__cgraph.vert.count - 1, dtype=numpy.dtype(c_id_t))
         cgraph_spanning_tree_kruskal(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(edges))
         return edges
 
     def topo_sort(self):
-        sort = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        sort = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
         cgraph_topo_sort(self.__cg_ptr, _numpy2ctypes(sort))
         return sort
 
     def unweighted_shortest(self, source, target):
-        pred = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        pred = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
         cgraph_unweighted_shortest(self.__cg_ptr, _numpy2ctypes(pred), source, target)
         return pred
 
     def shortest(self, weights, source, target=-1, mode='Dijkstra'):
-        pred = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
+        pred = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
         if mode == 'Dijkstra':
             cgraph_shortest_dijkstra(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
         elif mode == 'Bellman-Ford':
