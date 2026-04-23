@@ -241,9 +241,9 @@ class Graph:
         cgraph_topo_sort(self.__cg_ptr, _numpy2ctypes(sort))
         return sort
 
-    def unweighted_shortest(self, weights, source, target):
+    def unweighted_shortest(self, source, target):
         pred = numpy.empty(self.vert_num, dtype=numpy.dtype(c_id_t))
-        cgraph_unweighted_shortest(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
+        cgraph_unweighted_shortest(self.__cg_ptr, _numpy2ctypes(pred), source, target)
         return pred
 
     def shortest(self, weights, source, target=-1, mode='Dijkstra'):

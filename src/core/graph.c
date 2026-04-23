@@ -117,6 +117,7 @@ static void cgraphVertResize(CGraph *graph) {
   initNextList(graph->vertNext, oldCap, newCap);
   memset(graph->edgeHead + oldCap, INVALID_ID,
          (newCap - oldCap) * sizeof(CGraphId));
+  memset(graph->indegree + oldCap, 0, (newCap - oldCap) * sizeof(CGraphInt));
 
   if (graph->directed) {
     graph->outdegree =

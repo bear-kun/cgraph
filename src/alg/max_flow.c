@@ -6,32 +6,119 @@
 #include <string.h>
 
 typedef struct {
-  const CGraph *network;
-  CGraph *residual;
-  CGraphId src, sink;
-  CGraphId *pred; // eid
-  const FlowType *cap;
-  FlowType *curr;
-  FlowType *flow;
+  CGraphInt *edgeBegin;
+  CGraphId *edges;
+  CGraphId *edgeXor; // from ^ to
+} Residual;
+
+typedef struct {
+  const Residual *residual;
+  CGraphId from;
+  CGraphInt current, end;
+} ResidualIter;
+
+static void callback(const CGraphId from, const CGraphId eid, const CGraphId to,
+                     void *data) {
+  const Residual *residual = data;
+  residual->edges[residual->edgeBegin[from + 1]++] = eid;
+  residual->edges[residual->edgeBegin[to + 1]++] = ~eid;
+}
+
+static void residualInit(Residual *residual, const CGraph *network) {
+  residual->edgeBegin = malloc((network->vertRange + 1) * sizeof(CGraphInt));
+  residual->edges = malloc(2 * network->edgeRange * sizeof(CGraphId));
+  residual->edgeXor = malloc(network->edgeRange * sizeof(CGraphId));
+
+  CGraphInt begin = 0;
+  residual->edgeBegin[0] = 0;
+  for (CGraphInt v = 0; v < network->vertRange; v++) {
+    residual->edgeBegin[v + 1] = begin;
+    begin += network->indegree[v] + network->outdegree[v];
+  }
+  cgraphTraverseEdges(network, residual, callback);
+
+  for (CGraphId e = 0; e < network->edgeRange; e++) {
+    residual->edgeXor[e] = network->edgeFrom[e] ^ network->edgeTo[e];
+  }
+}
+
+static void residualRelease(const Residual *residual) {
+  free(residual->edgeBegin);
+  free(residual->edges);
+  free(residual->edgeXor);
+}
+
+static void residualReverse(const Residual *residual, const CGraphId from,
+                            const CGraphId eid, const CGraphId to) {
+  const CGraphInt end1 = residual->edgeBegin[from + 1];
+  for (CGraphInt i = residual->edgeBegin[from]; i != end1; i++) {
+    if (residual->edges[i] == eid) {
+      residual->edges[i] = ~eid;
+      break;
+    }
+  }
+  const CGraphInt end2 = residual->edgeBegin[to + 1];
+  for (CGraphInt i = residual->edgeBegin[to]; i != end2; i++) {
+    if (residual->edges[i] == ~eid) {
+      residual->edges[i] = eid;
+      break;
+    }
+  }
+}
+
+static ResidualIter residualGetIter(const Residual *residual,
+                                    const CGraphId from) {
+  ResidualIter iter;
+  iter.residual = residual;
+  iter.from = from;
+  iter.current = residual->edgeBegin[from];
+  iter.end = residual->edgeBegin[from + 1];
+  return iter;
+}
+
+static CGraphBool residualIterNextEdge(ResidualIter *iter, CGraphId *eid,
+                                       CGraphId *to) {
+  while (iter->current != iter->end) {
+    const CGraphId did = iter->residual->edges[iter->current++];
+    if (did < 0) continue;
+    *eid = did;
+    *to = iter->from ^ iter->residual->edgeXor[did];
+    return true;
+  }
+  return false;
+}
+
+typedef struct {
+  Residual *residual;
+  CGraphId source, sink;
+
+  struct {
+    const FlowType *capacity;
+    FlowType *current;
+    CGraphBool *reverse;
+  } flow;
+
+  struct {
+    CGraphInt *version;
+    CGraphId *inedge;
+  } bfs;
 } Package;
 
-/*
- * 广度优先搜索寻找最短路径，
- * 之所以不用贪心寻找可扩容最大的边，
- * 是因为这可能会导致capacity大的边被反复反转，
- * 不如最短路径收敛稳定 O(V * E^2)
- */
-static CGraphBool bfs(const Package *pkg, CGraphQueue *const queue) {
+static CGraphBool bfs(const Package *pkg, CGraphQueue *queue,
+                      const CGraphInt version) {
+  pkg->bfs.version[pkg->source] = version;
+
   cgraphQueueClear(queue);
-  cgraphQueuePush(queue, pkg->src);
+  cgraphQueuePush(queue, pkg->source);
   while (!cgraphQueueEmpty(queue)) {
     const CGraphId from = cgraphQueuePop(queue);
 
     CGraphId eid, to;
-    CGraphIterLite iter = cgraphGetEdgeIter(pkg->residual, from);
-    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
-      if (to != pkg->src && pkg->pred[to] == INVALID_ID) {
-        pkg->pred[to] = eid;
+    ResidualIter iter = residualGetIter(pkg->residual, from);
+    while (residualIterNextEdge(&iter, &eid, &to)) {
+      if (pkg->bfs.version[to] != version) {
+        pkg->bfs.version[to] = version;
+        pkg->bfs.inedge[to] = eid;
         if (to == pkg->sink) return true;
         cgraphQueuePush(queue, to);
       }
@@ -40,76 +127,76 @@ static CGraphBool bfs(const Package *pkg, CGraphQueue *const queue) {
   return false;
 }
 
-// 寻找路径可调整的flow = min(capacity - flow)
 static FlowType pathFlow(const Package *pkg) {
   FlowType flow = CGRAPH_INF;
-  CGraphId eid = pkg->pred[pkg->sink];
-  while (eid != INVALID_ID) {
-    const CGraphId from = cgraphWhereEdgeFrom(pkg->residual, eid);
-    if (flow > pkg->cap[eid] - pkg->curr[eid]) {
-      flow = pkg->cap[eid] - pkg->curr[eid];
+  CGraphId to = pkg->sink;
+  while (to != pkg->source) {
+    const CGraphId eid = pkg->bfs.inedge[to];
+    const CGraphId from = pkg->residual->edgeXor[eid] ^ to;
+    if (flow > pkg->flow.capacity[eid] - pkg->flow.current[eid]) {
+      flow = pkg->flow.capacity[eid] - pkg->flow.current[eid];
     }
-    eid = pkg->pred[from];
+    to = from;
   }
   return flow;
 }
 
 static void update(const Package *pkg, const FlowType step) {
-  CGraphId eid = pkg->pred[pkg->sink];
-  while (eid != INVALID_ID) {
-    const CGraphId networkFrom = cgraphWhereEdgeFrom(pkg->network, eid);
-    const CGraphId residualFrom = cgraphWhereEdgeFrom(pkg->residual, eid);
+  CGraphId to = pkg->sink;
+  while (to != pkg->source) {
+    const CGraphId eid = pkg->bfs.inedge[to];
+    const CGraphId from = pkg->residual->edgeXor[eid] ^ to;
+    pkg->flow.current[eid] += step;
 
-    if (networkFrom == residualFrom) {
-      pkg->flow[eid] += step;
-    } else {
-      pkg->flow[eid] -= step;
+    if (pkg->flow.current[eid] >= pkg->flow.capacity[eid] *
+        (1 - CGRAPH_EPSILON)) {
+      pkg->flow.current[eid] = 0;
+      pkg->flow.reverse[eid] = !pkg->flow.reverse[eid];
+      residualReverse(pkg->residual, from, eid, to);
     }
-
-    pkg->curr[eid] += step;
-    if (pkg->curr[eid] == pkg->cap[eid]) {
-      // 若残余网络的边的flow满容，则反转，
-      // 视作原网络边可释放的flow
-      pkg->curr[eid] = 0;
-      cgraphReverseEdge(pkg->residual, eid);
-    }
-
-    eid = pkg->pred[residualFrom];
+    to = from;
   }
 }
 
 FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network,
                                   const FlowType capacity[], FlowType flow[],
                                   const CGraphId source, const CGraphId sink) {
-  CGraph residual;
-  cgraphCopy(&residual, network);
+  Residual residual;
+  residualInit(&residual, network);
   CGraphQueue *queue = cgraphQueueCreate(network->vertNum);
   memset(flow, 0, network->edgeRange * sizeof(FlowType));
 
   const Package pkg = {
-    .network = network,
-    .residual = &residual,
-    .src = source,
-    .sink = sink,
-    .pred = malloc(network->vertRange * sizeof(CGraphId)),
-    .cap = capacity,
-    .curr = calloc(network->edgeRange, sizeof(FlowType)),
-    .flow = flow,
+      .residual = &residual,
+      .source = source,
+      .sink = sink,
+      .flow.capacity = capacity,
+      .flow.current = flow,
+      .flow.reverse = calloc(network->edgeRange, sizeof(CGraphBool)),
+      .bfs.version = calloc(network->vertRange, sizeof(CGraphInt)),
+      .bfs.inedge = malloc(network->vertRange * sizeof(CGraphId)),
   };
 
   FlowType maxFlow = 0;
+  CGraphInt version = 0;
   while (true) {
-    memset(pkg.pred, INVALID_ID, network->vertRange * sizeof(CGraphId));
-    if (!bfs(&pkg, queue)) break;
+    if (!bfs(&pkg, queue, ++version)) break;
 
     const FlowType step = pathFlow(&pkg);
     update(&pkg, step);
     maxFlow += step;
   }
 
-  free(pkg.pred);
-  free(pkg.curr);
-  cgraphRelease(&residual);
+  for (CGraphId e = 0; e < network->edgeRange; e++) {
+    if (pkg.flow.reverse[e]) {
+      flow[e] = capacity[e] - flow[e];
+    }
+  }
+
+  free(pkg.flow.reverse);
+  free(pkg.bfs.version);
+  free(pkg.bfs.inedge);
+  residualRelease(&residual);
   cgraphQueueRelease(queue);
   return maxFlow;
 }

@@ -3,9 +3,6 @@
 
 #include "types.h"
 
-typedef WeightType TimeType; // aoa
-typedef WeightType FlowType; // flow
-
 void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[],
                         CGraphId successor[], TimeType earlyStart[],
                         TimeType lateStart[]);
