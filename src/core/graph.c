@@ -17,8 +17,8 @@ static void *safeRealloc(void *memory, const size_t newSize) {
   return mem;
 }
 
-static void reserveGraph(CGraph *graph, const CGraphSize vertCap, const CGraphSize edgeCap,
-                         const CGraphBool directed) {
+static void reserveGraph(CGraph *graph, const CGraphBool directed, const CGraphSize vertCap,
+                         const CGraphSize edgeCap) {
   graph->vert.capacity = vertCap;
   graph->vert.next = safeMalloc(vertCap * sizeof(CGraphId));
   graph->vert.degree[OUT] = safeMalloc(vertCap * sizeof(CGraphInt));
@@ -38,23 +38,51 @@ static void reserveGraph(CGraph *graph, const CGraphSize vertCap, const CGraphSi
   graph->edge.resize = NULL;
 }
 
+static void initNextList(CGraphId *list, const CGraphSize start, const CGraphSize end) {
+  for (CGraphSize i = start; i < end; i++) list[i] = (CGraphId)(i + 1);
+}
+
+static void clearVert(CGraph *graph, const CGraphSize range) {
+  graph->vert.count = 0;
+  graph->vert.free = 0;
+  graph->vert.range = 0;
+  graph->vert.head = INVALID_ID;
+  initNextList(graph->vert.next, 0, range);
+}
+
+static void clearEdges(CGraph *graph, const CGraphSize vertRange, const CGraphSize edgeRange) {
+  graph->edge.count = 0;
+  graph->edge.free = 0;
+  graph->edge.range = 0;
+
+  memset(graph->vert.degree[OUT], 0, vertRange * sizeof(CGraphInt));
+  memset(graph->edge.head[OUT], INVALID_ID, vertRange * sizeof(CGraphId));
+  memset(graph->edge.head[IN], INVALID_ID, vertRange * sizeof(CGraphId));
+  initNextList(graph->edge.next[OUT], 0, edgeRange);
+
+  if (graph->edge.directed) {
+    memset(graph->vert.degree[IN], 0, vertRange * sizeof(CGraphInt));
+  }
+}
+
 void cgraphInit(CGraph *graph, const CGraphBool directed, const CGraphSize vertCap,
                 const CGraphSize edgeCap) {
-  reserveGraph(graph, vertCap, edgeCap, directed);
-  cgraphClear(graph);
+  reserveGraph(graph, directed, vertCap, edgeCap);
+  clearVert(graph, vertCap);
+  clearEdges(graph, vertCap, edgeCap);
 }
 
 void cgraphCopyVert(CGraph *dst, const CGraph *src) {
   *dst = *src;
-  reserveGraph(dst, src->vert.range, src->edge.range, src->edge.directed);
+  reserveGraph(dst, src->edge.directed, src->vert.range, src->edge.range);
 
-  cgraphClearEdges(dst);
+  clearEdges(dst, dst->vert.capacity, dst->edge.capacity);
   memcpy(dst->vert.next, src->vert.next, dst->vert.capacity * sizeof(CGraphId));
 }
 
 void cgraphCopy(CGraph *dst, const CGraph *src) {
   *dst = *src;
-  reserveGraph(dst, src->vert.range, src->edge.range, src->edge.directed);
+  reserveGraph(dst, src->edge.directed, src->vert.range, src->edge.range);
 
   memcpy(dst->vert.next, src->vert.next, dst->vert.capacity * sizeof(CGraphId));
   memcpy(dst->vert.degree[OUT], src->vert.degree[OUT], dst->vert.capacity * sizeof(CGraphInt));
@@ -70,32 +98,13 @@ void cgraphCopy(CGraph *dst, const CGraph *src) {
   }
 }
 
-static void initNextList(CGraphId *list, const CGraphSize start, const CGraphSize end) {
-  for (CGraphSize i = start; i < end; i++) list[i] = (CGraphId)(i + 1);
-}
-
 void cgraphClearEdges(CGraph *graph) {
-  graph->edge.count = 0;
-  graph->edge.free = 0;
-  graph->edge.range = 0;
-
-  memset(graph->vert.degree[OUT], 0, graph->vert.capacity * sizeof(CGraphInt));
-  memset(graph->edge.head[OUT], INVALID_ID, graph->vert.capacity * sizeof(CGraphId));
-  memset(graph->edge.head[IN], INVALID_ID, graph->vert.capacity * sizeof(CGraphId));
-  initNextList(graph->edge.next[OUT], 0, graph->edge.capacity);
-
-  if (graph->edge.directed) {
-    memset(graph->vert.degree[IN], 0, graph->vert.capacity * sizeof(CGraphInt));
-  }
+  clearEdges(graph, graph->vert.range, graph->edge.range);
 }
 
 void cgraphClear(CGraph *graph) {
-  graph->vert.count = 0;
-  graph->vert.free = 0;
-  graph->vert.range = 0;
-  graph->vert.head = INVALID_ID;
-  initNextList(graph->vert.next, 0, graph->vert.capacity);
-  cgraphClearEdges(graph);
+  clearVert(graph, graph->vert.range);
+  clearEdges(graph, graph->vert.range, graph->edge.range);
 }
 
 static void vertResize(CGraph *graph) {
