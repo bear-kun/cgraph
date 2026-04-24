@@ -6,7 +6,7 @@
 #include <string.h>
 
 typedef struct {
-  CGraphInt *edgeBegin;
+  CGraphInt *offset;
   CGraphId *edges;
   CGraphId *edgeXor; // from ^ to
 } Residual;
@@ -19,20 +19,20 @@ typedef struct {
 
 static void callback(const CGraphId from, const CGraphId eid, const CGraphId to, void *data) {
   const Residual *residual = data;
-  residual->edges[residual->edgeBegin[from + 1]++] = eid;
-  residual->edges[residual->edgeBegin[to + 1]++] = ~eid;
+  residual->edges[residual->offset[from + 1]++] = eid;
+  residual->edges[residual->offset[to + 1]++] = ~eid;
 }
 
 static void residualInit(Residual *residual, const CGraph *network) {
-  residual->edgeBegin = malloc((network->vert.range + 1) * sizeof(CGraphInt));
+  residual->offset = malloc((network->vert.range + 1) * sizeof(CGraphInt));
   residual->edges = malloc(2 * network->edge.range * sizeof(CGraphId));
   residual->edgeXor = malloc(network->edge.range * sizeof(CGraphId));
 
   CGraphInt begin = 0;
-  residual->edgeBegin[0] = 0;
+  residual->offset[0] = 0;
   for (CGraphInt v = 0; v < network->vert.range; v++) {
-    residual->edgeBegin[v + 1] = begin;
-    begin += network->vert.indegree[v] + network->vert.outdegree[v];
+    residual->offset[v + 1] = begin;
+    begin += network->vert.degree[0][v] + network->vert.degree[1][v];
   }
   cgraphTraverseEdges(network, residual, callback);
 
@@ -42,22 +42,22 @@ static void residualInit(Residual *residual, const CGraph *network) {
 }
 
 static void residualRelease(const Residual *residual) {
-  free(residual->edgeBegin);
+  free(residual->offset);
   free(residual->edges);
   free(residual->edgeXor);
 }
 
 static void residualReverse(const Residual *residual, const CGraphId from, const CGraphId eid,
                             const CGraphId to) {
-  const CGraphInt end1 = residual->edgeBegin[from + 1];
-  for (CGraphInt i = residual->edgeBegin[from]; i != end1; i++) {
+  const CGraphInt end1 = residual->offset[from + 1];
+  for (CGraphInt i = residual->offset[from]; i != end1; i++) {
     if (residual->edges[i] == eid) {
       residual->edges[i] = ~eid;
       break;
     }
   }
-  const CGraphInt end2 = residual->edgeBegin[to + 1];
-  for (CGraphInt i = residual->edgeBegin[to]; i != end2; i++) {
+  const CGraphInt end2 = residual->offset[to + 1];
+  for (CGraphInt i = residual->offset[to]; i != end2; i++) {
     if (residual->edges[i] == ~eid) {
       residual->edges[i] = eid;
       break;
@@ -69,8 +69,8 @@ static ResidualIter residualGetIter(const Residual *residual, const CGraphId fro
   ResidualIter iter;
   iter.residual = residual;
   iter.from = from;
-  iter.current = residual->edgeBegin[from];
-  iter.end = residual->edgeBegin[from + 1];
+  iter.current = residual->offset[from];
+  iter.end = residual->offset[from + 1];
   return iter;
 }
 

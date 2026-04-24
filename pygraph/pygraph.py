@@ -20,7 +20,7 @@ class CGraph(ctypes.Structure):
             ('capacity', c_size_t), ('count', c_size_t),
             ('range', c_id_t), ('free', c_id_t),
             ('head', c_id_t), ('next', c_ptr(c_id_t)),
-            ('indegree', c_ptr(c_int_t)), ('outdegree', c_ptr(c_int_t)),
+            ('degree', c_ptr(c_int_t) * 2),
             ('resize', c_resize_cb_t)
         ]
 
@@ -29,7 +29,8 @@ class CGraph(ctypes.Structure):
             ('directed', c_bool_t),
             ('capacity', c_size_t), ('count', c_size_t),
             ('range', c_id_t), ('free', c_id_t),
-            ('head', c_ptr(c_id_t)), ('next', c_ptr(c_id_t)),
+            ('head', c_ptr(c_id_t) * 2),
+            ('next', c_ptr(c_id_t) * 2),
             ('from', c_ptr(c_id_t)), ('to', c_ptr(c_id_t)),
             ('resize', c_resize_cb_t)
         ]
@@ -76,12 +77,8 @@ cgraph_delete_edge.argtypes = (c_graph_ptr, c_id_t)
 cgraph_find_edge = cgraph.cgraphFindEdge
 cgraph_find_edge.restype = c_id_t
 cgraph_find_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
-cgraph_where_edge_from = cgraph.cgraphWhereEdgeFrom
-cgraph_where_edge_from.restype = c_id_t
-cgraph_where_edge_from.argtypes = (c_graph_ptr, c_id_t)
-cgraph_where_edge_to = cgraph.cgraphWhereEdgeTo
-cgraph_where_edge_to.restype = c_id_t
-cgraph_where_edge_to.argtypes = (c_graph_ptr, c_id_t)
+cgraph_where_edge_from_to = cgraph.cgraphWhereEdgeFromTo
+cgraph_where_edge_from_to.argtypes = (c_graph_ptr, c_id_t, c_ptr(c_id_t), c_ptr(c_id_t))
 
 # Iterator
 cgraph_get_vert_iter = cgraph.cgraphGetVertIter
@@ -203,11 +200,10 @@ class Graph:
     def find_edge(self, from_vid, to_vid):
         return cgraph_find_edge(self.__cg_ptr, from_vid, to_vid)
 
-    def where_edge_from(self, eid):
-        return cgraph_where_edge_from(self.__cg_ptr, eid)
-
-    def where_edge_to(self, eid):
-        return cgraph_where_edge_to(self.__cg_ptr, eid)
+    def where_edge_from_to(self, eid):
+        from_vid, to_vid = c_id_t(), c_id_t()
+        cgraph_where_edge_from_to(self.__cg_ptr, eid, c_ref(from_vid), c_ref(to_vid))
+        return from_vid.value, to_vid.value
 
     def __iter__(self):
         return iter(GraphVertices(self.__cg_ptr))

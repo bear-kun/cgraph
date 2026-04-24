@@ -15,7 +15,7 @@ static void indegreeInitQueue(const CGraph *graph, const CGraphInt indegree[], C
 void cgraphTopoPath(const CGraph *const graph, CGraphId predecessor[]) {
   CGraphQueue *queue = cgraphQueueCreate(graph->vert.count);
   CGraphInt *indegree = malloc(graph->vert.range * sizeof(CGraphInt));
-  memcpy(indegree, graph->vert.indegree, graph->vert.range * sizeof(CGraphInt));
+  memcpy(indegree, graph->vert.degree[1], graph->vert.range * sizeof(CGraphInt));
   memset(predecessor, INVALID_ID, graph->vert.range * sizeof(CGraphId));
   indegreeInitQueue(graph, indegree, queue);
 
@@ -43,7 +43,7 @@ void cgraphTopoPath(const CGraph *const graph, CGraphId predecessor[]) {
 void cgraphTopoSort(const CGraph *const graph, CGraphId sort[]) {
   CGraphQueue *queue = cgraphQueueCreate(graph->vert.count);
   CGraphInt *indegree = malloc(graph->vert.range * sizeof(CGraphInt));
-  memcpy(indegree, graph->vert.indegree, graph->vert.range * sizeof(CGraphInt));
+  memcpy(indegree, graph->vert.degree[1], graph->vert.range * sizeof(CGraphInt));
   indegreeInitQueue(graph, indegree, queue);
 
   CGraphInt counter = 0;

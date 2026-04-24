@@ -20,12 +20,13 @@ typedef WeightType FlowType; // flow
 
 typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 
+// O(6 * V + 4 * E)
 typedef struct {
   struct {
     CGraphSize capacity, count;
     CGraphId range, free;
     CGraphId head, *next;
-    CGraphInt *indegree, *outdegree;
+    CGraphInt *degree[2];
     CGraphResizeCallback resize;
   } vert;
 
@@ -33,7 +34,7 @@ typedef struct {
     CGraphBool directed;
     CGraphSize capacity, count;
     CGraphId range, free;
-    CGraphId *head, *next;
+    CGraphId *head[2], *next[2];
     CGraphId *from, *to;
     CGraphResizeCallback resize;
   } edge;
@@ -42,7 +43,7 @@ typedef struct {
 typedef struct {
   const CGraph *view;
   CGraphId vertCurr;
-  CGraphId edgeCurr[0];
+  CGraphId edgeCurr[];
 } CGraphIter;
 
 typedef struct {

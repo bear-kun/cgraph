@@ -59,7 +59,7 @@ static void init(Package *pkg, const CGraph *graph) {
 
   pkg->queue = cgraphQueueCreate(vertRange);
   pkg->indegree = malloc(vertRange * sizeof(CGraphInt));
-  memcpy(pkg->indegree, graph->vert.indegree, vertRange * sizeof(CGraphInt));
+  memcpy(pkg->indegree, graph->vert.degree[1], vertRange * sizeof(CGraphInt));
   memset(pkg->earlyStart, 0, vertRange * sizeof(TimeType));
   memset(pkg->successor, INVALID_ID, vertRange * sizeof(CGraphId));
   for (CGraphId i = 0; i < vertRange; i++) pkg->lateStart[i] = CGRAPH_INF;
