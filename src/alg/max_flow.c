@@ -35,10 +35,7 @@ static void residualInit(Residual *residual, const CGraph *network) {
     begin += network->vert.degree[0][v] + network->vert.degree[1][v];
   }
   cgraphTraverseEdges(network, residual, callback);
-
-  for (CGraphId e = 0; e < network->edge.range; e++) {
-    residual->edgeXor[e] = network->edge.from[e] ^ network->edge.to[e];
-  }
+  memcpy(residual->edgeXor, network->edge.xor, network->edge.range * sizeof(CGraphId));
 }
 
 static void residualRelease(const Residual *residual) {

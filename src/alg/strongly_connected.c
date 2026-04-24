@@ -40,7 +40,6 @@ void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
   CGraphStack *stack = cgraphStackCreate(graph->vert.count);
   CGraphBool *flag = calloc(graph->vert.range, sizeof(CGraphBool));
   Package pkg = {&reverse, iter, stack, flag, components, 0};
-  memset(reverse.edge.head[0], INVALID_ID, graph->vert.range * sizeof(CGraphId));
   memset(components, INVALID_ID, graph->vert.range * sizeof(CGraphId));
 
   // 正序
@@ -51,7 +50,7 @@ void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
 
   // 逆序
   iter->view = &reverse;
-  cgraphIterResetEdge(pkg.iter, INVALID_ID);
+  cgraphIterResetAllEdges(pkg.iter);
   while (!cgraphStackEmpty(stack)) {
     const CGraphId vert = cgraphStackPop(stack);
     if (flag[vert] == 1) {

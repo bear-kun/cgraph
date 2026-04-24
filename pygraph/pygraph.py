@@ -31,7 +31,7 @@ class CGraph(ctypes.Structure):
             ('range', c_id_t), ('free', c_id_t),
             ('head', c_ptr(c_id_t) * 2),
             ('next', c_ptr(c_id_t) * 2),
-            ('from', c_ptr(c_id_t)), ('to', c_ptr(c_id_t)),
+            ('xor', c_ptr(c_id_t)), ('to', c_ptr(c_id_t)),
             ('resize', c_resize_cb_t)
         ]
 
@@ -43,7 +43,9 @@ class CGraph(ctypes.Structure):
 class CGraphIterLite(ctypes.Structure):
     _fields_ = [
         ('view', c_ptr(CGraph)),
-        ('curr', c_id_t)
+        ('curr', c_id_t),
+        ('vert', c_id_t),
+        ('dir', c_bool_t)
     ]
 
 

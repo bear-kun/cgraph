@@ -1,4 +1,5 @@
 #include "cgraph/alg.h"
+#include "cgraph/graph.h"
 #include "cgraph/iter.h"
 #include "struct/disjoint_set.h"
 #include "struct/heap.h"
@@ -65,9 +66,11 @@ void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[], 
 
   CGraphSize counter = 0;
   while (!cgraphHeapEmpty(heap)) {
+    CGraphId from, to;
     const CGraphId eid = cgraphHeapPop(heap);
-    const CGraphId cls1 = cgraphDisjointFind(disjointSet, graph->edge.from[eid]);
-    const CGraphId cls2 = cgraphDisjointFind(disjointSet, graph->edge.to[eid]);
+    cgraphWhereEdgeFromTo(graph, eid, &from, &to);
+    const CGraphId cls1 = cgraphDisjointFind(disjointSet, from);
+    const CGraphId cls2 = cgraphDisjointFind(disjointSet, to);
 
     if (cls1 != cls2) {
       edges[counter++] = eid;

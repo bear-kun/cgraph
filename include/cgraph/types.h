@@ -35,20 +35,26 @@ typedef struct {
     CGraphSize capacity, count;
     CGraphId range, free;
     CGraphId *head[2], *next[2];
-    CGraphId *from, *to;
+    CGraphId *xor, *to;
     CGraphResizeCallback resize;
   } edge;
 } CGraph;
 
 typedef struct {
   const CGraph *view;
-  CGraphId vertCurr;
-  CGraphId edgeCurr[];
+
+  struct {
+    CGraphId vert;
+    CGraphBool *dir;
+    CGraphId edge[];
+  } curr;
 } CGraphIter;
 
 typedef struct {
   const CGraph *view;
   CGraphId curr;
+  CGraphId vert;
+  CGraphBool dir;
 } CGraphIterLite;
 
 #endif // GRAPH_VERTEX_EDGE_H
