@@ -8,7 +8,7 @@ file(GLOB_RECURSE ALG_SOURCES "src/alg/*.c" "src/struct/*.c")
 
 if (CGRAPH_ONLY_CORE)
     add_library(cgraph_core STATIC ${CORE_SOURCES})
-    target_include_directories(cgraph_core PRIVATE include/cgraph)
+    target_include_directories(cgraph_core PRIVATE include)
     return()
 endif ()
 

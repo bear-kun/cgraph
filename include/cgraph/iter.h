@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// explorer
 CGraphExplorer *cgraphGetExplorer(const CGraph *graph);
 CGraphExplorer *cgraphGetExplorerRev(const CGraph *graph);
 void cgraphExplorerRelease(CGraphExplorer *iter);
@@ -20,8 +21,7 @@ CGraphBool cgraphExplorerNextEdge(CGraphExplorer *iter, CGraphId from, CGraphId 
 // reverse of the insertion order
 CGraphBool cgraphExplorerNextEdgeRev(CGraphExplorer *iter, CGraphId to, CGraphId *eid,
                                      CGraphId *from);
-
-// lite
+// iter
 CGraphIter cgraphGetVertIter(const CGraph *graph);
 CGraphIter cgraphGetEdgeIter(const CGraph *graph, CGraphId from);
 CGraphIter cgraphGetEdgeIterRev(const CGraph *graph, CGraphId to);
