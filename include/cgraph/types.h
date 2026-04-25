@@ -23,18 +23,16 @@ typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 // O(6 * V + 4 * E)
 typedef struct {
   struct {
-    CGraphSize capacity, count;
-    CGraphId range, free;
-    CGraphId head, *next;
+    CGraphSize capacity, count, range;
+    CGraphId free, head, *next;
     CGraphInt *degree[2];
     CGraphResizeCallback resize;
   } vert;
 
   struct {
     CGraphBool directed;
-    CGraphSize capacity, count;
-    CGraphId range, free;
-    CGraphId *head[2], *next[2];
+    CGraphSize capacity, count, range;
+    CGraphId free, *head[2], *next[2];
     CGraphId *xor, *to;
     CGraphResizeCallback resize;
   } edge;
@@ -48,13 +46,14 @@ typedef struct {
     CGraphBool *dir;
     CGraphId edge[];
   } curr;
-} CGraphIter;
+} CGraphExplorer;
 
 typedef struct {
   const CGraph *view;
   CGraphId curr;
   CGraphId vert;
   CGraphBool dir;
-} CGraphIterLite;
+  CGraphBool undirected;
+} CGraphIter;
 
 #endif // GRAPH_VERTEX_EDGE_H

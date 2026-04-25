@@ -16,8 +16,8 @@ void cgraphUnweightedShortest(const CGraph *const graph, CGraphId predecessor[],
     const CGraphId from = cgraphQueuePop(queue);
 
     CGraphId eid, to;
-    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
-    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
+    CGraphIter iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (predecessor[to] == INVALID_ID) {
         predecessor[to] = from;
         if (to == target) goto end;
@@ -46,8 +46,8 @@ void cgraphShortestDijkstra(const CGraph *const graph, const WeightType weights[
     if (from == target) break;
 
     CGraphId eid, to;
-    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
-    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
+    CGraphIter iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (distance[from] + weights[eid] < distance[to]) {
         distance[to] = distance[from] + weights[eid];
         predecessor[to] = from;
@@ -83,8 +83,8 @@ void cgraphShortestBellmanFord(const CGraph *const graph, const WeightType weigh
     isInQueue[from] = false;
 
     CGraphId eid, to;
-    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
-    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
+    CGraphIter iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (distance[to] <= distance[from] + weights[eid]) continue;
 
       distance[to] = distance[from] + weights[eid];

@@ -1,5 +1,5 @@
 import ctypes
-import numpy
+import numpy as np
 
 cgraph = ctypes.CDLL('./cgraph.dll')
 
@@ -17,9 +17,8 @@ c_weight_t = ctypes.c_double
 class CGraph(ctypes.Structure):
     class _Vertices(ctypes.Structure):
         _fields_ = [
-            ('capacity', c_size_t), ('count', c_size_t),
-            ('range', c_id_t), ('free', c_id_t),
-            ('head', c_id_t), ('next', c_ptr(c_id_t)),
+            ('capacity', c_size_t), ('count', c_size_t), ('range', c_size_t),
+            ('free', c_id_t), ('head', c_id_t), ('next', c_ptr(c_id_t)),
             ('degree', c_ptr(c_int_t) * 2),
             ('resize', c_resize_cb_t)
         ]
@@ -27,10 +26,8 @@ class CGraph(ctypes.Structure):
     class _Edges(ctypes.Structure):
         _fields_ = [
             ('directed', c_bool_t),
-            ('capacity', c_size_t), ('count', c_size_t),
-            ('range', c_id_t), ('free', c_id_t),
-            ('head', c_ptr(c_id_t) * 2),
-            ('next', c_ptr(c_id_t) * 2),
+            ('capacity', c_size_t), ('count', c_size_t), ('range', c_size_t),
+            ('free', c_id_t), ('head', c_ptr(c_id_t) * 2), ('next', c_ptr(c_id_t) * 2),
             ('xor', c_ptr(c_id_t)), ('to', c_ptr(c_id_t)),
             ('resize', c_resize_cb_t)
         ]
@@ -40,12 +37,13 @@ class CGraph(ctypes.Structure):
     ]
 
 
-class CGraphIterLite(ctypes.Structure):
+class CGraphIter(ctypes.Structure):
     _fields_ = [
         ('view', c_ptr(CGraph)),
         ('curr', c_id_t),
         ('vert', c_id_t),
-        ('dir', c_bool_t)
+        ('dir', c_bool_t),
+        ('undirected', c_bool_t)
     ]
 
 
@@ -64,18 +62,20 @@ cgraph_clear.argtypes = (c_graph_ptr,)
 cgraph_add_vert = cgraph.cgraphAddVert
 cgraph_add_vert.restype = c_id_t
 cgraph_add_vert.argtypes = (c_graph_ptr,)
-cgraph_reserve_vert = cgraph.cgraphReserveVert
-cgraph_reserve_vert.argtypes = (c_graph_ptr, c_size_t)
+cgraph_add_vertices = cgraph.cgraphAddVertices
+cgraph_add_vertices.argtypes = (c_graph_ptr, c_size_t)
 cgraph_delete_vert = cgraph.cgraphDeleteVert
 cgraph_delete_vert.argtypes = (c_graph_ptr, c_id_t)
 
 cgraph_add_edge = cgraph.cgraphAddEdge
 cgraph_add_edge.restype = c_id_t
 cgraph_add_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
-cgraph_reverse_edge = cgraph.cgraphReverseEdge
-cgraph_reverse_edge.argtypes = (c_graph_ptr, c_id_t)
+cgraph_add_edges = cgraph.cgraphAddEdges
+cgraph_add_edges.argtypes = (c_graph_ptr, c_size_t, c_ptr(c_id_t * 2))
 cgraph_delete_edge = cgraph.cgraphDeleteEdge
 cgraph_delete_edge.argtypes = (c_graph_ptr, c_id_t)
+cgraph_reverse_edge = cgraph.cgraphReverseEdge
+cgraph_reverse_edge.argtypes = (c_graph_ptr, c_id_t)
 cgraph_find_edge = cgraph.cgraphFindEdge
 cgraph_find_edge.restype = c_id_t
 cgraph_find_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
@@ -84,17 +84,24 @@ cgraph_where_edge_from_to.argtypes = (c_graph_ptr, c_id_t, c_ptr(c_id_t), c_ptr(
 
 # Iterator
 cgraph_get_vert_iter = cgraph.cgraphGetVertIter
-cgraph_get_vert_iter.restype = CGraphIterLite
+cgraph_get_vert_iter.restype = CGraphIter
 cgraph_get_vert_iter.argtypes = (c_graph_ptr,)
 cgraph_get_edge_iter = cgraph.cgraphGetEdgeIter
-cgraph_get_edge_iter.restype = CGraphIterLite
+cgraph_get_edge_iter.restype = CGraphIter
 cgraph_get_edge_iter.argtypes = (c_graph_ptr, c_id_t)
-cgraph_iter_lite_next_vert = cgraph.cgraphIterLiteNextVert
-cgraph_iter_lite_next_vert.restype = c_bool_t
-cgraph_iter_lite_next_vert.argtypes = (c_ptr(CGraphIterLite), c_ptr(c_id_t))
-cgraph_iter_lite_next_edge = cgraph.cgraphIterLiteNextEdge
-cgraph_iter_lite_next_edge.restype = c_bool_t
-cgraph_iter_lite_next_edge.argtypes = (c_ptr(CGraphIterLite), c_ptr(c_id_t), c_ptr(c_id_t))
+cgraph_get_edge_iter_rev = cgraph.cgraphGetEdgeIterRev
+cgraph_get_edge_iter_rev.restype = CGraphIter
+cgraph_get_edge_iter_rev.argtypes = (c_graph_ptr, c_id_t)
+
+cgraph_iter_next_vert = cgraph.cgraphIterNextVert
+cgraph_iter_next_vert.restype = c_bool_t
+cgraph_iter_next_vert.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t))
+cgraph_iter_next_edge = cgraph.cgraphIterNextEdge
+cgraph_iter_next_edge.restype = c_bool_t
+cgraph_iter_next_edge.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t), c_ptr(c_id_t))
+cgraph_iter_next_edge_rev = cgraph.cgraphIterNextEdgeRev
+cgraph_iter_next_edge_rev.restype = c_bool_t
+cgraph_iter_next_edge_rev.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_ptr(c_id_t))
 
 # Algorithm
 cgraph_eulerian_path = cgraph.cgraphEulerianPath
@@ -131,7 +138,7 @@ class GraphEdges:
 
     def __next__(self):
         eid, to = c_id_t(), c_id_t()
-        if cgraph_iter_lite_next_edge(c_ref(self.__iter), c_ref(eid), c_ref(to)):
+        if cgraph_iter_next_edge(c_ref(self.__iter), c_ref(eid), c_ref(to)):
             return eid.value, to.value
         raise StopIteration
 
@@ -146,12 +153,12 @@ class GraphVertices:
 
     def __next__(self):
         vid = c_id_t()
-        if cgraph_iter_lite_next_vert(c_ref(self.__iter), c_ref(vid)):
+        if cgraph_iter_next_vert(c_ref(self.__iter), c_ref(vid)):
             return vid.value, GraphEdges(self.__cg_ptr, vid)
         raise StopIteration
 
 
-_numpy2ctypes = numpy.ctypeslib.as_ctypes
+_numpy2ctypes = np.ctypeslib.as_ctypes
 
 
 class Graph:
@@ -187,11 +194,15 @@ class Graph:
     def add_vert(self):
         return cgraph_add_vert(self.__cg_ptr)
 
-    def reserve_vert(self, num):
-        cgraph_reserve_vert(self.__cg_ptr, num)
+    def add_vertices(self, count):
+        cgraph_add_vertices(self.__cg_ptr, count)
 
     def add_edge(self, from_vid, to_vid):
         return cgraph_add_edge(self.__cg_ptr, from_vid, to_vid)
+
+    def add_edges(self, endpoints):
+        endpoints = np.asarray(endpoints)
+        return cgraph_add_edges(self.__cg_ptr, len(endpoints), _numpy2ctypes(endpoints))
 
     def delete_vert(self, vid):
         cgraph_delete_vert(self.__cg_ptr, vid)
@@ -213,47 +224,53 @@ class Graph:
     def edges(self, vid):
         return GraphEdges(self.__cg_ptr, vid)
 
-    def eulerian_path(self, source, target=-1):
-        path = numpy.empty(self.__cgraph.edge.count + 1, dtype=numpy.dtype(c_id_t))
+    def eulerian_path(self, source, target=None):
+        target = -1 if target is None else target
+        path = np.empty(self.__cgraph.edge.count + 1, dtype=np.dtype(c_id_t))
         if not cgraph_eulerian_path(self.__cg_ptr, _numpy2ctypes(path), source, target):
             return None
         return path
 
     def articulations(self):
-        arts = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
+        arts = np.empty(self.__cgraph.vert.count, dtype=np.dtype(c_id_t))
         c_ptr2 = ctypes.pointer(ctypes.cast(_numpy2ctypes(arts), c_ptr(c_id_t)))
         count = cgraph_articulations(self.__cg_ptr, c_ptr2)
         arts.resize(count, refcheck=False)
         return arts
 
     def strongly_connected(self):
-        components = numpy.empty(self.__cgraph.vert.range, dtype=numpy.dtype(c_id_t))
+        components = np.empty(self.__cgraph.vert.range, dtype=np.dtype(c_id_t))
         cgraph_strongly_connected(self.__cg_ptr, _numpy2ctypes(components))
         return components
 
     def max_flow(self, capacity, source, sink):
-        flow = numpy.empty(self.__cgraph.edge.count, dtype=numpy.dtype(c_weight_t))
+        capacity = np.asarray(capacity)
+        flow = np.empty(self.__cgraph.edge.count, dtype=np.dtype(c_weight_t))
         max_flow = cgraph_max_flow_edmonds_karp(self.__cg_ptr,
                                                 _numpy2ctypes(capacity), _numpy2ctypes(flow), source, sink)
         return max_flow, flow
 
     def spanning_tree(self, weights):
-        edges = numpy.empty(self.__cgraph.vert.count - 1, dtype=numpy.dtype(c_id_t))
+        weights = np.asarray(weights)
+        edges = np.empty(self.__cgraph.vert.count - 1, dtype=np.dtype(c_id_t))
         cgraph_spanning_tree_kruskal(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(edges))
         return edges
 
     def topo_sort(self):
-        sort = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
+        sort = np.empty(self.__cgraph.vert.count, dtype=np.dtype(c_id_t))
         cgraph_topo_sort(self.__cg_ptr, _numpy2ctypes(sort))
         return sort
 
-    def unweighted_shortest(self, source, target):
-        pred = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
+    def unweighted_shortest(self, source, target=None):
+        target = -1 if target is None else target
+        pred = np.empty(self.__cgraph.vert.count, dtype=np.dtype(c_id_t))
         cgraph_unweighted_shortest(self.__cg_ptr, _numpy2ctypes(pred), source, target)
         return pred
 
-    def shortest(self, weights, source, target=-1, mode='Dijkstra'):
-        pred = numpy.empty(self.__cgraph.vert.count, dtype=numpy.dtype(c_id_t))
+    def shortest(self, weights, source, target=None, mode='Dijkstra'):
+        weights = np.asarray(weights)
+        target = -1 if target is None else target
+        pred = np.empty(self.__cgraph.vert.count, dtype=np.dtype(c_id_t))
         if mode == 'Dijkstra':
             cgraph_shortest_dijkstra(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
         elif mode == 'Bellman-Ford':

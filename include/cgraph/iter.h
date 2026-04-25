@@ -3,26 +3,37 @@
 
 #include "types.h"
 
-CGraphIter *cgraphGetIter(const CGraph *graph);
-void cgraphIterRelease(CGraphIter *iter);
+CGraphExplorer *cgraphGetExplorer(const CGraph *graph);
+CGraphExplorer *cgraphGetExplorerRev(const CGraph *graph);
+void cgraphExplorerRelease(CGraphExplorer *iter);
 
-void cgraphIterResetVert(CGraphIter *iter);
-void cgraphIterResetEdge(CGraphIter *iter, CGraphId from);
-void cgraphIterResetAllEdges(CGraphIter *iter);
+void cgraphExplorerResetVert(CGraphExplorer *iter);
+void cgraphExplorerResetEdge(CGraphExplorer *iter, CGraphId from);
+void cgraphExplorerResetAllEdges(CGraphExplorer *iter);
+void cgraphExplorerResetEdgeRev(CGraphExplorer *iter, CGraphId to);
+void cgraphExplorerResetAllEdgesRev(CGraphExplorer *iter);
 
-CGraphBool cgraphIterNextVert(CGraphIter *iter, CGraphId *vid);
-CGraphBool cgraphIterNextEdge(CGraphIter *iter, CGraphId from, CGraphId *eid, CGraphId *to);
+// reverse of the insertion order
+CGraphBool cgraphExplorerNextVert(CGraphExplorer *iter, CGraphId *vid);
+// reverse of the insertion order
+CGraphBool cgraphExplorerNextEdge(CGraphExplorer *iter, CGraphId from, CGraphId *eid, CGraphId *to);
+// reverse of the insertion order
+CGraphBool cgraphExplorerNextEdgeRev(CGraphExplorer *iter, CGraphId to, CGraphId *eid,
+                                     CGraphId *from);
 
 // lite
-CGraphIterLite cgraphGetVertIter(const CGraph *graph);
-CGraphIterLite cgraphGetEdgeIter(const CGraph *graph, CGraphId from);
-CGraphIterLite cgraphGetEdgeIterRev(const CGraph *graph, CGraphId to);
+CGraphIter cgraphGetVertIter(const CGraph *graph);
+CGraphIter cgraphGetEdgeIter(const CGraph *graph, CGraphId from);
+CGraphIter cgraphGetEdgeIterRev(const CGraph *graph, CGraphId to);
 
-CGraphBool cgraphIterLiteNextVert(CGraphIterLite *iter, CGraphId *vid);
-CGraphBool cgraphIterLiteNextEdge(CGraphIterLite *iter, CGraphId *eid, CGraphId *to);
-CGraphBool cgraphIterLiteNextEdgeRev(CGraphIterLite *iter, CGraphId *eid, CGraphId *from);
+// reverse of the insertion order
+CGraphBool cgraphIterNextVert(CGraphIter *iter, CGraphId *vid);
+// reverse of the insertion order
+CGraphBool cgraphIterNextEdge(CGraphIter *iter, CGraphId *eid, CGraphId *to);
+// reverse of the insertion order
+CGraphBool cgraphIterNextEdgeRev(CGraphIter *iter, CGraphId *eid, CGraphId *from);
 
-void cgraphTraverseEdges(const CGraph *graph, void *userData,
-                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *userData));
+void cgraphTraverseEdges(const CGraph *graph, void *data,
+                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *data));
 
 #endif // GRAPH_ITER_H

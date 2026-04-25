@@ -6,8 +6,7 @@
 #include <string.h>
 
 typedef struct {
-  CGraph *reverse;
-  CGraphIter *iter;
+  CGraphExplorer *explorer;
   CGraphStack *stack;
   CGraphBool *flag;
   CGraphId *components;
@@ -17,50 +16,46 @@ typedef struct {
 static void forward(Package *pkg, const CGraphId from) {
   CGraphId eid, to;
   pkg->flag[from] = 1;
-  while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
+  while (cgraphExplorerNextEdge(pkg->explorer, from, &eid, &to)) {
     if (!pkg->flag[to]) forward(pkg, to);
-    cgraphAddEdge(pkg->reverse, to, from); // 边转向
   }
   cgraphStackPush(pkg->stack, from);
 }
 
-static void backward(Package *pkg, const CGraphId from) {
-  CGraphId eid, to;
-  pkg->components[from] = pkg->counter;
-  pkg->flag[from] = 0;
-  while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
-    if (pkg->flag[to]) backward(pkg, to);
+static void backward(Package *pkg, const CGraphId to) {
+  CGraphId eid, from;
+  pkg->flag[to] = 0;
+  pkg->components[to] = pkg->counter;
+  while (cgraphExplorerNextEdgeRev(pkg->explorer, to, &eid, &from)) {
+    if (pkg->flag[from]) backward(pkg, from);
   }
 }
 
 void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
-  CGraph reverse;
-  cgraphCopyVert(&reverse, graph);
-  CGraphIter *iter = cgraphGetIter(graph);
-  CGraphStack *stack = cgraphStackCreate(graph->vert.count);
-  CGraphBool *flag = calloc(graph->vert.range, sizeof(CGraphBool));
-  Package pkg = {&reverse, iter, stack, flag, components, 0};
+  Package pkg ={
+    .explorer = cgraphGetExplorer(graph),
+    .stack = cgraphStackCreate(graph->vert.count),
+    .flag = calloc(graph->vert.range, sizeof(CGraphBool)),
+    .components = components,
+    .counter = 0,
+  };
   memset(components, INVALID_ID, graph->vert.range * sizeof(CGraphId));
 
-  // 正序
   CGraphId from;
-  while (cgraphIterNextVert(pkg.iter, &from)) {
-    if (flag[from] == 0) forward(&pkg, from);
+  while (cgraphExplorerNextVert(pkg.explorer, &from)) {
+    if (pkg.flag[from] == 0) forward(&pkg, from);
   }
 
-  // 逆序
-  iter->view = &reverse;
-  cgraphIterResetAllEdges(pkg.iter);
-  while (!cgraphStackEmpty(stack)) {
-    const CGraphId vert = cgraphStackPop(stack);
-    if (flag[vert] == 1) {
+  cgraphExplorerResetAllEdgesRev(pkg.explorer);
+  while (!cgraphStackEmpty(pkg.stack)) {
+    const CGraphId vert = cgraphStackPop(pkg.stack);
+    if (pkg.flag[vert] == 1) {
       backward(&pkg, vert);
       pkg.counter++;
     }
   }
 
-  free(flag);
-  cgraphIterRelease(iter);
-  cgraphRelease(&reverse);
-  cgraphStackRelease(stack);
+  free(pkg.flag);
+  cgraphExplorerRelease(pkg.explorer);
+  cgraphStackRelease(pkg.stack);
 }

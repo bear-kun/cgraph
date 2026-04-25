@@ -1,8 +1,6 @@
 #include "cgraph/alg.h"
 #include "cgraph/iter.h"
 #include "struct/stack.h"
-
-#include <stdio.h>
 #include <stdlib.h>
 
 /*
@@ -15,7 +13,7 @@
  */
 
 typedef struct {
-  CGraphIter *iter;
+  CGraphExplorer *explorer;
   CGraphBool *visited;
   CGraphId *path;
   CGraphId target; // 当前回环或路径的临时目标点target
@@ -24,7 +22,7 @@ typedef struct {
 
 static CGraphBool getTargetEdge(Package *pkg, const CGraphId from) {
   CGraphId eid;
-  while (cgraphIterNextEdge(pkg->iter, from, &eid, &pkg->to)) {
+  while (cgraphExplorerNextEdge(pkg->explorer, from, &eid, &pkg->to)) {
     if (!pkg->visited[eid]) {
       pkg->visited[eid] = true;
       return true;
@@ -72,7 +70,7 @@ static CGraphBool EulerianPath_stack(Package *pkg, CGraphStack *stack, CGraphId 
 CGraphBool cgraphEulerianPath(const CGraph *graph, CGraphId path[], const CGraphId src,
                               const CGraphId dst) {
   Package pkg = {
-      .iter = cgraphGetIter(graph),
+      .explorer = cgraphGetExplorer(graph),
       .visited = calloc(graph->edge.range, sizeof(CGraphBool)),
       .path = path + graph->edge.count + 1,
       .target = dst
@@ -85,7 +83,7 @@ CGraphBool cgraphEulerianPath(const CGraph *graph, CGraphId path[], const CGraph
 
   free(pkg.visited);
   cgraphStackRelease(stack);
-  cgraphIterRelease(pkg.iter);
+  cgraphExplorerRelease(pkg.explorer);
   return res && path[0] != INVALID_ID;
 }
 

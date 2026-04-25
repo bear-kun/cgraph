@@ -13,7 +13,7 @@ struct VertexAttribute_ {
 };
 
 typedef struct {
-  CGraphIter *iter;
+  CGraphExplorer *explorer;
   Vertex *vertices;
   CGraphId topo;
   CGraphVector arts;
@@ -28,7 +28,7 @@ static void findArticulation(Package *pkg, const CGraphId from) {
   CGraphSize child_count = 0;
 
   CGraphId eid, to;
-  while (cgraphIterNextEdge(pkg->iter, from, &eid, &to)) {
+  while (cgraphExplorerNextEdge(pkg->explorer, from, &eid, &to)) {
     Vertex *adjacent = pkg->vertices + to;
 
     if (!adjacent->visited) {
@@ -66,7 +66,7 @@ static void findArticulation(Package *pkg, const CGraphId from) {
 
 CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations) {
   Package pkg = {
-      .iter = cgraphGetIter(graph),
+      .explorer = cgraphGetExplorer(graph),
       .vertices = calloc(graph->vert.range, sizeof(Vertex)),
       .topo = 0,
       .arts = cgraphVectorCreate()
@@ -77,12 +77,12 @@ CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations) {
   }
 
   CGraphId vid;
-  while (cgraphIterNextVert(pkg.iter, &vid)) {
+  while (cgraphExplorerNextVert(pkg.explorer, &vid)) {
     if (!pkg.vertices[vid].visited) findArticulation(&pkg, vid);
   }
 
   free(pkg.vertices);
-  cgraphIterRelease(pkg.iter);
+  cgraphExplorerRelease(pkg.explorer);
 
   *articulations = pkg.arts.elems;
   return (CGraphInt)pkg.arts.size;

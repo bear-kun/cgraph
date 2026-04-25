@@ -6,8 +6,8 @@
 
 static void indegreeInitQueue(const CGraph *graph, const CGraphInt indegree[], CGraphQueue *queue) {
   CGraphId vid;
-  CGraphIterLite vertices = cgraphGetVertIter(graph);
-  while (cgraphIterLiteNextVert(&vertices, &vid)) {
+  CGraphIter vertices = cgraphGetVertIter(graph);
+  while (cgraphIterNextVert(&vertices, &vid)) {
     if (indegree[vid] == 0) cgraphQueuePush(queue, vid);
   }
 }
@@ -25,8 +25,8 @@ void cgraphTopoPath(const CGraph *const graph, CGraphId predecessor[]) {
     counter++;
 
     CGraphId eid, to;
-    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
-    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
+    CGraphIter iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (predecessor[to] == -1) predecessor[to] = from;
       if (--indegree[to] == 0) cgraphQueuePush(queue, to);
     }
@@ -52,8 +52,8 @@ void cgraphTopoSort(const CGraph *const graph, CGraphId sort[]) {
     sort[counter++] = from;
 
     CGraphId eid, to;
-    CGraphIterLite iter = cgraphGetEdgeIter(graph, from);
-    while (cgraphIterLiteNextEdge(&iter, &eid, &to)) {
+    CGraphIter iter = cgraphGetEdgeIter(graph, from);
+    while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (--indegree[to] == 0) cgraphQueuePush(queue, to);
     }
   }
