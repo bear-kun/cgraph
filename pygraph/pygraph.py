@@ -124,6 +124,7 @@ cgraph_unweighted_shortest.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t, c_id_
 cgraph_shortest_dijkstra = cgraph.cgraphShortestDijkstra
 cgraph_shortest_dijkstra.argtypes = (c_graph_ptr, c_ptr(c_weight_t), c_ptr(c_id_t), c_id_t, c_id_t)
 cgraph_shortest_bellman_ford = cgraph.cgraphShortestBellmanFord
+cgraph_shortest_bellman_ford.restype = c_bool_t
 cgraph_shortest_bellman_ford.argtypes = (c_graph_ptr, c_ptr(c_weight_t), c_ptr(c_id_t), c_id_t)
 
 
@@ -271,7 +272,8 @@ class Graph:
             if method.lower() == 'dijkstra':
                 cgraph_shortest_dijkstra(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
             elif method.lower() == 'bellman-ford':
-                cgraph_shortest_bellman_ford(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source)
+                if not cgraph_shortest_bellman_ford(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source):
+                    return None
             else:
                 raise NotImplementedError
         return pred

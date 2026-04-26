@@ -6,7 +6,7 @@
 #include <string.h>
 
 typedef struct {
-  CGraphInt *offset;
+  CGraphId *offset;
   CGraphId *edges;
   CGraphId *edgeXor; // from ^ to
 } Residual;
@@ -24,11 +24,11 @@ static void callback(const CGraphId from, const CGraphId eid, const CGraphId to,
 }
 
 static void residualInit(Residual *residual, const CGraph *network) {
-  residual->offset = malloc((network->vert.range + 1) * sizeof(CGraphInt));
+  residual->offset = malloc((network->vert.range + 1) * sizeof(CGraphId));
   residual->edges = malloc(2 * network->edge.range * sizeof(CGraphId));
   residual->edgeXor = network->edge.xor;
 
-  CGraphInt begin = 0;
+  CGraphId begin = 0;
   residual->offset[0] = 0;
   for (CGraphSize v = 0; v < network->vert.range; v++) {
     residual->offset[v + 1] = begin;
@@ -44,15 +44,15 @@ static void residualRelease(const Residual *residual) {
 
 static void residualReverse(const Residual *residual, const CGraphId from, const CGraphId eid,
                             const CGraphId to) {
-  const CGraphInt end1 = residual->offset[from + 1];
-  for (CGraphInt i = residual->offset[from]; i != end1; i++) {
+  const CGraphId end1 = residual->offset[from + 1];
+  for (CGraphId i = residual->offset[from]; i != end1; i++) {
     if (residual->edges[i] == eid) {
       residual->edges[i] = ~eid;
       break;
     }
   }
-  const CGraphInt end2 = residual->offset[to + 1];
-  for (CGraphInt i = residual->offset[to]; i != end2; i++) {
+  const CGraphId end2 = residual->offset[to + 1];
+  for (CGraphId i = residual->offset[to]; i != end2; i++) {
     if (residual->edges[i] == ~eid) {
       residual->edges[i] = eid;
       break;

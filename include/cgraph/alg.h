@@ -43,8 +43,8 @@ void cgraphUnweightedShortest(const CGraph *graph, CGraphId predecessor[], CGrap
 void cgraphShortestDijkstra(const CGraph *graph, const WeightType weights[], CGraphId predecessor[],
                             CGraphId source, CGraphId target);
 
-void cgraphShortestBellmanFord(const CGraph *graph, const WeightType weights[],
-                               CGraphId predecessor[], CGraphId source);
+CGraphBool cgraphShortestBellmanFord(const CGraph *graph, const WeightType weights[],
+                                     CGraphId predecessor[], CGraphId source);
 
 // matrix
 void FloydWarshallWeightedPath(WeightType **weight, CGraphSize vertNum, CGraphId **path,
