@@ -7,11 +7,11 @@ c_void = None
 c_ref = ctypes.byref
 c_ptr = ctypes.POINTER
 c_bool_t = ctypes.c_bool
-c_int_t = ctypes.c_int64
-c_id_t = ctypes.c_int64
-c_size_t = ctypes.c_uint64
+c_int_t = ctypes.c_int32
+c_id_t = ctypes.c_int32
+c_size_t = ctypes.c_uint32
 c_resize_cb_t = ctypes.CFUNCTYPE(c_void, c_size_t, c_size_t)
-c_weight_t = ctypes.c_double
+c_weight_t = ctypes.c_float
 
 
 class CGraph(ctypes.Structure):
@@ -201,7 +201,7 @@ class Graph:
         return cgraph_add_edge(self.__cg_ptr, from_vid, to_vid)
 
     def add_edges(self, endpoints):
-        endpoints = np.asarray(endpoints)
+        endpoints = np.asarray(endpoints, dtype=np.dtype(c_id_t))
         return cgraph_add_edges(self.__cg_ptr, len(endpoints), _numpy2ctypes(endpoints))
 
     def delete_vert(self, vid):
@@ -244,14 +244,14 @@ class Graph:
         return components
 
     def max_flow(self, capacity, source, sink):
-        capacity = np.asarray(capacity)
+        capacity = np.asarray(capacity, dtype=np.dtype(c_weight_t))
         flow = np.empty(self.__cgraph.edge.count, dtype=np.dtype(c_weight_t))
         max_flow = cgraph_max_flow_edmonds_karp(self.__cg_ptr,
                                                 _numpy2ctypes(capacity), _numpy2ctypes(flow), source, sink)
         return max_flow, flow
 
     def spanning_tree(self, weights):
-        weights = np.asarray(weights)
+        weights = np.asarray(weights, dtype=np.dtype(c_weight_t))
         edges = np.empty(self.__cgraph.vert.count - 1, dtype=np.dtype(c_id_t))
         cgraph_spanning_tree_kruskal(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(edges))
         return edges
@@ -261,20 +261,17 @@ class Graph:
         cgraph_topo_sort(self.__cg_ptr, _numpy2ctypes(sort))
         return sort
 
-    def unweighted_shortest(self, source, target=None):
+    def shortest_path(self, source, target=None, weights=None, method='dijkstra'):
         target = -1 if target is None else target
         pred = np.empty(self.__cgraph.vert.count, dtype=np.dtype(c_id_t))
-        cgraph_unweighted_shortest(self.__cg_ptr, _numpy2ctypes(pred), source, target)
-        return pred
-
-    def shortest(self, weights, source, target=None, mode='Dijkstra'):
-        weights = np.asarray(weights)
-        target = -1 if target is None else target
-        pred = np.empty(self.__cgraph.vert.count, dtype=np.dtype(c_id_t))
-        if mode == 'Dijkstra':
-            cgraph_shortest_dijkstra(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
-        elif mode == 'Bellman-Ford':
-            cgraph_shortest_bellman_ford(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source)
+        if weights is None:
+            cgraph_unweighted_shortest(self.__cg_ptr, _numpy2ctypes(pred), source, target)
         else:
-            raise NotImplementedError
+            weights = np.asarray(weights, dtype=np.dtype(c_weight_t))
+            if method.lower() == 'dijkstra':
+                cgraph_shortest_dijkstra(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source, target)
+            elif method.lower() == 'bellman-ford':
+                cgraph_shortest_bellman_ford(self.__cg_ptr, _numpy2ctypes(weights), _numpy2ctypes(pred), source)
+            else:
+                raise NotImplementedError
         return pred

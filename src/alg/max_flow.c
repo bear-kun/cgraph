@@ -30,7 +30,7 @@ static void residualInit(Residual *residual, const CGraph *network) {
 
   CGraphInt begin = 0;
   residual->offset[0] = 0;
-  for (CGraphInt v = 0; v < network->vert.range; v++) {
+  for (CGraphSize v = 0; v < network->vert.range; v++) {
     residual->offset[v + 1] = begin;
     begin += network->vert.degree[0][v] + network->vert.degree[1][v];
   }
@@ -176,7 +176,7 @@ FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network, const FlowType capacity
     maxFlow += step;
   }
 
-  for (CGraphId e = 0; e < network->edge.range; e++) {
+  for (CGraphSize e = 0; e < network->edge.range; e++) {
     if (pkg.flow.reverse[e]) {
       flow[e] = capacity[e] - flow[e];
     }

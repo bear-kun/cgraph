@@ -48,5 +48,5 @@ CGraphId cgraphHeapPop(CGraphHeap *heap) {
 }
 
 void cgraphHeapBuild(CGraphHeap *heap) {
-  for (uint64_t i = heap->size >> 1; i; --i) graphHeapifyDown(heap, i);
+  for (CGraphSize i = heap->size >> 1; i; --i) graphHeapifyDown(heap, i);
 }

@@ -7,14 +7,14 @@
 
 // set CGRAPH_EPSILON = 0 if WeightType is Integer
 #define INVALID_ID (-1)
-#define CGRAPH_INF DBL_MAX
-#define CGRAPH_EPSILON 1e-12
+#define CGRAPH_INF FLT_MAX
+#define CGRAPH_EPSILON 1e-6f
 
 typedef bool CGraphBool;
-typedef int64_t CGraphInt;
-typedef int64_t CGraphId;
-typedef uint64_t CGraphSize;
-typedef double WeightType;
+typedef int32_t CGraphInt;
+typedef int32_t CGraphId;
+typedef uint32_t CGraphSize;
+typedef float WeightType;
 typedef WeightType TimeType; // aoa
 typedef WeightType FlowType; // flow
 

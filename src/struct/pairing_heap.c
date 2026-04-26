@@ -68,7 +68,7 @@ void cgraphPairingHeapPush(CGraphPairingHeap *heap, const CGraphId id) {
 }
 
 CGraphId cgraphPairingHeapPop(CGraphPairingHeap *heap) {
-  const CGraphId root = heap->root - heap->nodes;
+  const CGraphId root = (CGraphId)(heap->root - heap->nodes);
   heap->root = combine(heap->root->right, heap->stack);
   return root;
 }
