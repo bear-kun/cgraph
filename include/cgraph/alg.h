@@ -25,12 +25,14 @@ CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations);
 // return ComponentID * V
 void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]);
 
+// only directed-network
 FlowType cgraphMaxFlowEdmondsKarp(const CGraph *network, const FlowType capacity[], FlowType flow[],
                                   CGraphId source, CGraphId sink);
 
 // only undirected-graph
 void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[], CGraphId predecessor[],
                             CGraphId root);
+// only undirected-graph
 void cgraphSpanningTreeKruskal(const CGraph *graph, const WeightType weights[], CGraphId edges[]);
 
 void cgraphTopoSort(const CGraph *graph, CGraphId sort[]);

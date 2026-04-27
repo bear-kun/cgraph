@@ -240,8 +240,8 @@ CGraphId cgraphAddVert(CGraph *const graph) {
 }
 
 void cgraphAddVertices(CGraph *graph, const CGraphSize count) {
-  if (graph->vert.count <= graph->vert.capacity + count) {
-    vertResize(graph, graph->vert.capacity + count);
+  if (graph->vert.count + count > graph->vert.capacity) {
+    vertResize(graph, graph->vert.count + count);
   }
 
   for (CGraphSize i = 0; i != count; i++) {
@@ -259,8 +259,8 @@ CGraphId cgraphAddEdge(CGraph *const graph, const CGraphId from, const CGraphId 
 }
 
 void cgraphAddEdges(CGraph *graph, const CGraphSize count, const CGraphId endpoints[][2]) {
-  if (graph->edge.count <= graph->edge.capacity + count) {
-    edgeResize(graph, graph->edge.capacity + count);
+  if (graph->edge.count + count > graph->edge.capacity) {
+    edgeResize(graph, graph->edge.count + count);
   }
 
   for (CGraphSize i = 0; i != count; i++) {

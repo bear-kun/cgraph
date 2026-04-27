@@ -9,29 +9,31 @@ typedef struct {
   CGraphId *offset;
   CGraphId *edges;
   CGraphId *edgeXor; // from ^ to
+  CGraphId *cursor;
 } Residual;
 
 typedef struct {
   const Residual *residual;
   CGraphId from;
-  CGraphInt current, end;
+  CGraphId current, end;
 } ResidualIter;
 
 static void callback(const CGraphId from, const CGraphId eid, const CGraphId to, void *data) {
   const Residual *residual = data;
-  residual->edges[residual->offset[from + 1]++] = eid;
-  residual->edges[residual->offset[to + 1]++] = ~eid;
+  residual->edges[residual->cursor[from]++] = eid;
+  residual->edges[residual->cursor[to]++] = ~eid;
 }
 
 static void residualInit(Residual *residual, const CGraph *network) {
   residual->offset = malloc((network->vert.range + 1) * sizeof(CGraphId));
-  residual->edges = malloc(2 * network->edge.range * sizeof(CGraphId));
+  residual->edges = malloc(2 * network->edge.count * sizeof(CGraphId));
   residual->edgeXor = network->edge.xor;
+  residual->cursor = residual->offset + 1;
 
   CGraphId begin = 0;
   residual->offset[0] = 0;
   for (CGraphSize v = 0; v < network->vert.range; v++) {
-    residual->offset[v + 1] = begin;
+    residual->cursor[v] = begin;
     begin += network->vert.degree[0][v] + network->vert.degree[1][v];
   }
   cgraphTraverseEdges(network, residual, callback);
