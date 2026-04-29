@@ -20,7 +20,7 @@ void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[], CGr
     const CGraphId from = cgraphPairingHeapPop(heap);
 
     CGraphId eid, to;
-    CGraphIter iter = cgraphGetEdgeIter(graph, from);
+    CGraphIter iter = cgraphGetEdgeIter(graph, from, CGRAPH_OUT);
     while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (weights[eid] < minWeight[to]) {
         minWeight[to] = weights[eid];

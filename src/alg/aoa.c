@@ -26,7 +26,7 @@ static void forward(const Package *pkg) {
     const CGraphId from = cgraphQueuePop(pkg->queue);
 
     CGraphId eid, to;
-    CGraphIter iter = cgraphGetEdgeIter(pkg->graph, from);
+    CGraphIter iter = cgraphGetEdgeIter(pkg->graph, from, CGRAPH_OUT);
     while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (pkg->earlyStart[to] < pkg->earlyStart[from] + pkg->duration[eid]) {
         pkg->earlyStart[to] = pkg->earlyStart[from] + pkg->duration[eid];
@@ -41,7 +41,7 @@ static void backward(const Package *pkg, const CGraphId *begin, const CGraphId *
   do {
     const CGraphId from = *--p;
     CGraphId eid, to;
-    CGraphIter iter = cgraphGetEdgeIter(pkg->graph, from);
+    CGraphIter iter = cgraphGetEdgeIter(pkg->graph, from, CGRAPH_OUT);
     while (cgraphIterNextEdge(&iter, &eid, &to)) {
       if (pkg->lateStart[from] > pkg->lateStart[to] - pkg->duration[eid]) {
         pkg->lateStart[from] = pkg->lateStart[to] - pkg->duration[eid];
@@ -59,7 +59,7 @@ static void init(Package *pkg, const CGraph *graph) {
 
   pkg->queue = cgraphQueueCreate(vertRange);
   pkg->indegree = malloc(vertRange * sizeof(CGraphInt));
-  memcpy(pkg->indegree, graph->vert.degree[1], vertRange * sizeof(CGraphInt));
+  memcpy(pkg->indegree, graph->vert.degree[CGRAPH_IN], vertRange * sizeof(CGraphInt));
   memset(pkg->earlyStart, 0, vertRange * sizeof(TimeType));
   memset(pkg->successor, INVALID_ID, vertRange * sizeof(CGraphId));
   for (CGraphId i = 0; i < vertRange; i++) pkg->lateStart[i] = CGRAPH_INF;

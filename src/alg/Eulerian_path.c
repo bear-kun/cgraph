@@ -70,7 +70,7 @@ static CGraphBool EulerianPath_stack(Package *pkg, CGraphStack *stack, CGraphId 
 CGraphBool cgraphEulerianPath(const CGraph *graph, CGraphId path[], const CGraphId src,
                               const CGraphId dst) {
   Package pkg = {
-      .explorer = cgraphGetExplorer(graph),
+      .explorer = cgraphGetExplorer(graph, CGRAPH_OUT),
       .visited = calloc(graph->edge.range, sizeof(CGraphBool)),
       .path = path + graph->edge.count + 1,
       .target = dst

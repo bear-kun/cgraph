@@ -18,7 +18,7 @@ class CGraph(ctypes.Structure):
     class _Vertices(ctypes.Structure):
         _fields_ = [
             ('capacity', c_size_t), ('count', c_size_t), ('range', c_size_t),
-            ('free', c_id_t), ('head', c_id_t), ('next', c_ptr(c_id_t)),
+            ('array', c_ptr(c_id_t)),
             ('degree', c_ptr(c_int_t) * 2),
             ('resize', c_resize_cb_t)
         ]
@@ -42,7 +42,8 @@ class CGraphIter(ctypes.Structure):
         ('view', c_ptr(CGraph)),
         ('curr', c_id_t),
         ('vert', c_id_t),
-        ('dir', c_bool_t),
+        ('dir_current', c_bool_t),
+        ('dir_global', c_bool_t),
         ('undirected', c_bool_t)
     ]
 
@@ -88,10 +89,7 @@ cgraph_get_vert_iter.restype = CGraphIter
 cgraph_get_vert_iter.argtypes = (c_graph_ptr,)
 cgraph_get_edge_iter = cgraph.cgraphGetEdgeIter
 cgraph_get_edge_iter.restype = CGraphIter
-cgraph_get_edge_iter.argtypes = (c_graph_ptr, c_id_t)
-cgraph_get_edge_iter_rev = cgraph.cgraphGetEdgeIterRev
-cgraph_get_edge_iter_rev.restype = CGraphIter
-cgraph_get_edge_iter_rev.argtypes = (c_graph_ptr, c_id_t)
+cgraph_get_edge_iter.argtypes = (c_graph_ptr, c_id_t, c_bool_t)
 
 cgraph_iter_next_vert = cgraph.cgraphIterNextVert
 cgraph_iter_next_vert.restype = c_bool_t
@@ -99,9 +97,6 @@ cgraph_iter_next_vert.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t))
 cgraph_iter_next_edge = cgraph.cgraphIterNextEdge
 cgraph_iter_next_edge.restype = c_bool_t
 cgraph_iter_next_edge.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t), c_ptr(c_id_t))
-cgraph_iter_next_edge_rev = cgraph.cgraphIterNextEdgeRev
-cgraph_iter_next_edge_rev.restype = c_bool_t
-cgraph_iter_next_edge_rev.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_ptr(c_id_t))
 
 # Algorithm
 cgraph_eulerian_path = cgraph.cgraphEulerianPath
@@ -134,7 +129,7 @@ class GraphEdges:
         self.__vid = vid
 
     def __iter__(self):
-        self.__iter = cgraph_get_edge_iter(self.__cg_ptr, self.__vid)
+        self.__iter = cgraph_get_edge_iter(self.__cg_ptr, self.__vid, 0)
         return self
 
     def __next__(self):

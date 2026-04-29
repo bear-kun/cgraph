@@ -30,7 +30,7 @@ static void initCSR(CSR *csr, const CGraph *graph, const WeightType *weights) {
   csr->offset[0] = 0;
   for (CGraphSize v = 0; v < graph->vert.range; v++) {
     csr->cursor[v] = begin;
-    begin += graph->vert.degree[0][v];
+    begin += graph->vert.degree[CGRAPH_OUT][v];
   }
 
   const void *data[2] = {csr, weights};

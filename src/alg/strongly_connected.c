@@ -26,14 +26,14 @@ static void backward(Package *pkg, const CGraphId to) {
   CGraphId eid, from;
   pkg->flag[to] = 0;
   pkg->components[to] = pkg->counter;
-  while (cgraphExplorerNextEdgeRev(pkg->explorer, to, &eid, &from)) {
+  while (cgraphExplorerNextEdge(pkg->explorer, to, &eid, &from)) {
     if (pkg->flag[from]) backward(pkg, from);
   }
 }
 
 void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
   Package pkg ={
-    .explorer = cgraphGetExplorer(graph),
+    .explorer = cgraphGetExplorer(graph, CGRAPH_OUT),
     .stack = cgraphStackCreate(graph->vert.count),
     .flag = calloc(graph->vert.range, sizeof(CGraphBool)),
     .components = components,
@@ -46,7 +46,7 @@ void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
     if (pkg.flag[from] == 0) forward(&pkg, from);
   }
 
-  cgraphExplorerResetAllEdgesRev(pkg.explorer);
+  cgraphExplorerResetAllEdges(pkg.explorer, CGRAPH_IN);
   while (!cgraphStackEmpty(pkg.stack)) {
     const CGraphId vert = cgraphStackPop(pkg.stack);
     if (pkg.flag[vert] == 1) {

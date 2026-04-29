@@ -45,6 +45,7 @@ void cgraphUnweightedShortest(const CGraph *graph, CGraphId predecessor[], CGrap
 void cgraphShortestDijkstra(const CGraph *graph, const WeightType weights[], CGraphId predecessor[],
                             CGraphId source, CGraphId target);
 
+// only directed-graph
 CGraphBool cgraphShortestBellmanFord(const CGraph *graph, const WeightType weights[],
                                      CGraphId predecessor[], CGraphId source);
 

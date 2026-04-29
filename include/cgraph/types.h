@@ -9,6 +9,8 @@
 #define INVALID_ID (-1)
 #define CGRAPH_INF FLT_MAX
 #define CGRAPH_EPSILON 1e-6f
+#define CGRAPH_OUT 0
+#define CGRAPH_IN 1
 
 typedef bool CGraphBool;
 typedef int32_t CGraphInt;
@@ -20,11 +22,11 @@ typedef WeightType FlowType; // flow
 
 typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
 
-// O(6 * V + 4 * E)
+// O(5 * V + 4 * E)
 typedef struct {
   struct {
     CGraphSize capacity, count, range;
-    CGraphId free, head, *next;
+    CGraphId *array;
     CGraphInt *degree[2];
     CGraphResizeCallback resize;
   } vert;
@@ -40,19 +42,18 @@ typedef struct {
 
 typedef struct {
   const CGraph *view;
-
-  struct {
-    CGraphId vert;
-    CGraphBool *dir;
-    CGraphId edge[];
-  } curr;
+  CGraphId vert;
+  CGraphBool dir_global;
+  CGraphBool *dir_current;
+  CGraphId edge[];
 } CGraphExplorer;
 
 typedef struct {
   const CGraph *view;
-  CGraphId curr;
   CGraphId vert;
-  CGraphBool dir;
+  CGraphId edge;
+  CGraphBool dir_current;
+  CGraphBool dir_global;
   CGraphBool undirected;
 } CGraphIter;
 

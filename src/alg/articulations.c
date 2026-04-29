@@ -66,7 +66,7 @@ static void findArticulation(Package *pkg, const CGraphId from) {
 
 CGraphInt cgraphArticulations(const CGraph *graph, CGraphId **articulations) {
   Package pkg = {
-      .explorer = cgraphGetExplorer(graph),
+      .explorer = cgraphGetExplorer(graph, CGRAPH_OUT),
       .vertices = calloc(graph->vert.range, sizeof(Vertex)),
       .topo = 0,
       .arts = cgraphVectorCreate()

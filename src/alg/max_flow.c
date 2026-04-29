@@ -34,7 +34,7 @@ static void residualInit(Residual *residual, const CGraph *network) {
   residual->offset[0] = 0;
   for (CGraphSize v = 0; v < network->vert.range; v++) {
     residual->cursor[v] = begin;
-    begin += network->vert.degree[0][v] + network->vert.degree[1][v];
+    begin += network->vert.degree[CGRAPH_OUT][v] + network->vert.degree[CGRAPH_IN][v];
   }
   cgraphTraverseEdges(network, residual, callback);
 }

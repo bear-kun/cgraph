@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define OUT 0
-#define IN 1
+#define OUT CGRAPH_OUT
+#define IN CGRAPH_IN
 
 static void *safeMalloc(const size_t size) {
   void *mem = malloc(size);
@@ -20,7 +20,7 @@ static void *safeRealloc(void *memory, const size_t newSize) {
 static void reserveGraph(CGraph *graph, const CGraphBool directed, const CGraphSize vertCap,
                          const CGraphSize edgeCap) {
   graph->vert.capacity = vertCap;
-  graph->vert.next = safeMalloc(vertCap * sizeof(CGraphId));
+  graph->vert.array = safeMalloc(vertCap * sizeof(CGraphId));
   graph->vert.degree[OUT] = safeMalloc(vertCap * sizeof(CGraphInt));
   graph->vert.degree[IN] = directed
                              ? safeMalloc(vertCap * sizeof(CGraphInt))
@@ -38,16 +38,10 @@ static void reserveGraph(CGraph *graph, const CGraphBool directed, const CGraphS
   graph->edge.resize = NULL;
 }
 
-static void initNextList(CGraphId *list, const CGraphSize start, const CGraphSize end) {
-  for (CGraphSize i = start; i < end; i++) list[i] = (CGraphId)(i + 1);
-}
-
 static void clearVert(CGraph *graph, const CGraphSize range) {
   graph->vert.count = 0;
-  graph->vert.free = 0;
   graph->vert.range = 0;
-  graph->vert.head = INVALID_ID;
-  initNextList(graph->vert.next, 0, range);
+  for (CGraphId i = 0; i < range; i++) graph->vert.array[i] = i;
 }
 
 static void clearEdges(CGraph *graph, const CGraphSize vertRange, const CGraphSize edgeRange) {
@@ -58,7 +52,7 @@ static void clearEdges(CGraph *graph, const CGraphSize vertRange, const CGraphSi
   memset(graph->vert.degree[OUT], 0, vertRange * sizeof(CGraphInt));
   memset(graph->edge.head[OUT], INVALID_ID, vertRange * sizeof(CGraphId));
   memset(graph->edge.head[IN], INVALID_ID, vertRange * sizeof(CGraphId));
-  initNextList(graph->edge.next[OUT], 0, edgeRange);
+  for (CGraphId i = 0; i < edgeRange; i++) graph->edge.next[OUT][i] = i + 1;
 
   if (graph->edge.directed) {
     memset(graph->vert.degree[IN], 0, vertRange * sizeof(CGraphInt));
@@ -77,14 +71,14 @@ void cgraphCopyVertices(CGraph *dst, const CGraph *src) {
   reserveGraph(dst, src->edge.directed, src->vert.range, src->edge.range);
 
   clearEdges(dst, dst->vert.capacity, dst->edge.capacity);
-  memcpy(dst->vert.next, src->vert.next, dst->vert.capacity * sizeof(CGraphId));
+  memcpy(dst->vert.array, src->vert.array, dst->vert.capacity * sizeof(CGraphId));
 }
 
 void cgraphCopy(CGraph *dst, const CGraph *src) {
   *dst = *src;
   reserveGraph(dst, src->edge.directed, src->vert.range, src->edge.range);
 
-  memcpy(dst->vert.next, src->vert.next, dst->vert.capacity * sizeof(CGraphId));
+  memcpy(dst->vert.array, src->vert.array, dst->vert.capacity * sizeof(CGraphId));
   memcpy(dst->vert.degree[OUT], src->vert.degree[OUT], dst->vert.capacity * sizeof(CGraphInt));
   memcpy(dst->edge.head[OUT], src->edge.head[OUT], dst->vert.capacity * sizeof(CGraphId));
   memcpy(dst->edge.head[IN], src->edge.head[IN], dst->vert.capacity * sizeof(CGraphId));
@@ -117,12 +111,12 @@ static void vertResize(CGraph *graph, const CGraphSize capacity) {
   const CGraphSize oldCap = graph->vert.capacity;
   const CGraphSize newCap = resizeNewCapacity(capacity);
 
-  graph->vert.next = safeRealloc(graph->vert.next, newCap * sizeof(CGraphId));
+  graph->vert.array = safeRealloc(graph->vert.array, newCap * sizeof(CGraphId));
   graph->vert.degree[OUT] = safeRealloc(graph->vert.degree[OUT], newCap * sizeof(CGraphInt));
   graph->edge.head[OUT] = safeRealloc(graph->edge.head[OUT], newCap * sizeof(CGraphId));
   graph->edge.head[IN] = safeRealloc(graph->edge.head[IN], newCap * sizeof(CGraphId));
 
-  initNextList(graph->vert.next, oldCap, newCap);
+  for (CGraphId i = (CGraphId)oldCap; i < newCap; i++) graph->vert.array[i] = i;
   memset(graph->vert.degree[OUT] + oldCap, 0, (newCap - oldCap) * sizeof(CGraphInt));
   memset(graph->edge.head[OUT] + oldCap, INVALID_ID, (newCap - oldCap) * sizeof(CGraphId));
   memset(graph->edge.head[IN] + oldCap, INVALID_ID, (newCap - oldCap) * sizeof(CGraphId));
@@ -146,15 +140,14 @@ static void edgeResize(CGraph *graph, const CGraphSize capacity) {
   graph->edge.to = safeRealloc(graph->edge.to, newCap * sizeof(CGraphId));
   graph->edge.next[OUT] = safeRealloc(graph->edge.next[OUT], newCap * sizeof(CGraphId));
   graph->edge.next[IN] = safeRealloc(graph->edge.next[IN], newCap * sizeof(CGraphId));
-
-  initNextList(graph->edge.next[OUT], oldCap, newCap);
+  for (CGraphId i = (CGraphId)oldCap; i < newCap; i++) graph->edge.next[OUT][i] = i + 1;
 
   graph->edge.capacity = newCap;
   if (graph->edge.resize) graph->edge.resize(oldCap, newCap);
 }
 
 void cgraphRelease(const CGraph *const graph) {
-  free(graph->vert.next);
+  free(graph->vert.array);
   free(graph->vert.degree[OUT]);
   if (graph->edge.directed) free(graph->vert.degree[IN]);
 
@@ -166,33 +159,43 @@ void cgraphRelease(const CGraph *const graph) {
   free(graph->edge.to);
 }
 
-static CGraphId vertGetNew(CGraph *graph) {
-  const CGraphId vid = graph->vert.free;
-  graph->vert.free = graph->vert.next[vid];
+static void swap(CGraphId *array, CGraphSize i, CGraphSize j) {
+  const CGraphId tmp = array[i];
+  array[i] = array[j];
+  array[j] = tmp;
+}
+
+static CGraphId vertInsertNew(CGraph *graph) {
+  const CGraphId vid = graph->vert.array[graph->vert.count++];
   if (vid == graph->vert.range) graph->vert.range++;
-  graph->vert.count++;
   return vid;
 }
 
-static void vertDelete(CGraph *graph, const CGraphId vid) {
-  graph->vert.next[vid] = graph->vert.free;
-  graph->vert.free = vid;
+static void vertUnlinkAndDelete(CGraph *graph, const CGraphId vid) {
+  CGraphSize i = 0;
+  while (i < graph->vert.count && graph->vert.array[i] != vid) i++;
+  if (i == graph->vert.count) return;
+
+  swap(graph->vert.array, i, --graph->vert.count);
   if (vid == graph->vert.range - 1) graph->vert.range--;
-  graph->vert.count--;
 }
 
-static void vertInsert(CGraph *graph, const CGraphId vid) {
-  graph->vert.next[vid] = graph->vert.head;
-  graph->vert.head = vid;
+CGraphId cgraphAddVert(CGraph *const graph) {
+  if (graph->vert.count == graph->vert.capacity) vertResize(graph, graph->vert.capacity);
+  return vertInsertNew(graph);
 }
 
-static void vertUnlink(CGraph *graph, const CGraphId vid) {
-  for (CGraphId *ptr = &graph->vert.head; *ptr != INVALID_ID; ptr = graph->vert.next + *ptr) {
-    if (*ptr == vid) {
-      *ptr = graph->vert.next[*ptr];
-      break;
-    }
+void cgraphAddVertices(CGraph *graph, const CGraphSize count) {
+  if (graph->vert.count + count > graph->vert.capacity) {
+    vertResize(graph, graph->vert.count + count);
   }
+  for (CGraphSize i = 0; i < count; i++) {
+    vertInsertNew(graph);
+  }
+}
+
+void cgraphDeleteVert(CGraph *graph, const CGraphId vid) {
+  vertUnlinkAndDelete(graph, vid);
 }
 
 static CGraphId edgeGetNew(CGraph *graph, const CGraphId from, const CGraphId to) {
@@ -219,34 +222,17 @@ static void edgeInsert(const CGraph *graph, const CGraphId vid, const CGraphId e
   graph->vert.degree[dir][vid]++;
 }
 
-static void edgeUnlink(const CGraph *graph, const CGraphId vid, const CGraphId eid,
-                       const CGraphBool dir) {
+static CGraphBool edgeUnlink(const CGraph *graph, const CGraphId vid, const CGraphId eid,
+                             const CGraphBool dir) {
   CGraphId *next = graph->edge.next[dir];
   for (CGraphId *ptr = graph->edge.head[dir] + vid; *ptr != INVALID_ID; ptr = next + *ptr) {
     if (*ptr == eid) {
       *ptr = next[*ptr];
       graph->vert.degree[dir][vid]--;
-      break;
+      return true;
     }
   }
-}
-
-CGraphId cgraphAddVert(CGraph *const graph) {
-  if (graph->vert.count == graph->vert.capacity) vertResize(graph, graph->vert.capacity);
-
-  const CGraphId vid = vertGetNew(graph);
-  vertInsert(graph, vid);
-  return vid;
-}
-
-void cgraphAddVertices(CGraph *graph, const CGraphSize count) {
-  if (graph->vert.count + count > graph->vert.capacity) {
-    vertResize(graph, graph->vert.count + count);
-  }
-
-  for (CGraphSize i = 0; i != count; i++) {
-    vertInsert(graph, vertGetNew(graph));
-  }
+  return false;
 }
 
 CGraphId cgraphAddEdge(CGraph *const graph, const CGraphId from, const CGraphId to) {
@@ -272,16 +258,11 @@ void cgraphAddEdges(CGraph *graph, const CGraphSize count, const CGraphId endpoi
   }
 }
 
-void cgraphDeleteVert(CGraph *graph, const CGraphId vid) {
-  vertUnlink(graph, vid);
-  vertDelete(graph, vid);
-}
-
 void cgraphDeleteEdge(CGraph *graph, const CGraphId eid) {
   const CGraphId to = graph->edge.to[eid];
   const CGraphId from = graph->edge.xor[eid] ^ to;
 
-  edgeUnlink(graph, from, eid, OUT);
+  if (!edgeUnlink(graph, from, eid, OUT)) return;
   edgeUnlink(graph, to, eid, IN);
   edgeDelete(graph, eid);
 }
