@@ -1,4 +1,4 @@
-#include "struct/heap.h"
+#include "cgraph/struct/heap.h"
 #include <stdlib.h>
 
 static void graphHeapifyDown(CGraphHeap *heap, CGraphSize father) {

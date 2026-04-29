@@ -1,4 +1,4 @@
-#include "struct/vector.h"
+#include "cgraph/struct/vector.h"
 #include <stdlib.h>
 
 void cgraphVectorRelease(const CGraphVector *vector) {

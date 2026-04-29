@@ -1,6 +1,6 @@
 #include "cgraph/alg.h"
 #include "cgraph/iter.h"
-#include "struct/queue.h"
+#include "cgraph/struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
 

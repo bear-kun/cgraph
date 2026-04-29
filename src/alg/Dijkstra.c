@@ -1,6 +1,6 @@
 #include "cgraph/alg.h"
 #include "cgraph/iter.h"
-#include "struct/pairing_heap.h"
+#include "cgraph/struct/pairing_heap.h"
 #include <stdlib.h>
 #include <string.h>
 

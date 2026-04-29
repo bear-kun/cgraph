@@ -1,6 +1,6 @@
 #include "cgraph/alg.h"
 #include "cgraph/iter.h"
-#include "struct/queue.h"
+#include "cgraph/struct/queue.h"
 #include <string.h>
 
 void cgraphUnweightedShortest(const CGraph *const graph, CGraphId predecessor[],

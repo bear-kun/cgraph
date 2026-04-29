@@ -1,7 +1,7 @@
 #include "cgraph/alg.h"
 #include "cgraph/graph.h"
 #include "cgraph/iter.h"
-#include "struct/stack.h"
+#include "cgraph/struct/stack.h"
 #include <stdlib.h>
 #include <string.h>
 

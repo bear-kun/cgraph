@@ -1,4 +1,4 @@
-#include "struct/disjoint_set.h"
+#include "cgraph/struct/disjoint_set.h"
 #include <stdlib.h>
 #include <string.h>
 

@@ -1,9 +1,9 @@
 #include "cgraph/alg.h"
 #include "cgraph/graph.h"
 #include "cgraph/iter.h"
-#include "struct/disjoint_set.h"
-#include "struct/heap.h"
-#include "struct/pairing_heap.h"
+#include "cgraph/struct/pairing_heap.h"
+#include "cgraph/struct/disjoint_set.h"
+#include "cgraph/struct/heap.h"
 #include <stdlib.h>
 
 void cgraphSpanningTreePrim(const CGraph *graph, const WeightType weights[], CGraphId predecessor[],

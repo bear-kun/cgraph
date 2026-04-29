@@ -1,4 +1,4 @@
-#include "struct/pairing_heap.h"
+#include "cgraph/struct/pairing_heap.h"
 #include <stdlib.h>
 
 CGraphPairingHeap *cgraphPairingHeapCreate(const CGraphSize capacity,

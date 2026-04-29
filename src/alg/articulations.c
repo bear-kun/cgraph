@@ -1,6 +1,6 @@
 #include "cgraph/alg.h"
 #include "cgraph/iter.h"
-#include "struct/vector.h"
+#include "cgraph/struct/vector.h"
 #include <stdlib.h>
 
 typedef struct VertexAttribute_ Vertex;

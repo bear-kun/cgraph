@@ -1,6 +1,6 @@
 #include "cgraph/alg.h"
 #include "cgraph/iter.h"
-#include "struct/stack.h"
+#include "cgraph/struct/stack.h"
 #include <stdlib.h>
 
 /*

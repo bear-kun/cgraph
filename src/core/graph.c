@@ -66,6 +66,7 @@ void cgraphCopyVertices(CGraph *dst, const CGraph *src) {
   memset(dst->vert.degree[OUT], 0, dst->vert.capacity * sizeof(CGraphInt));
   memset(dst->edge.head[OUT], INVALID_ID, dst->vert.capacity * sizeof(CGraphId));
   memset(dst->edge.head[IN], INVALID_ID, dst->vert.capacity * sizeof(CGraphId));
+
   if (dst->edge.directed) {
     memset(dst->vert.degree[IN], 0, dst->vert.capacity * sizeof(CGraphInt));
   }
