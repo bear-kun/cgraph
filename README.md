@@ -1,15 +1,69 @@
-## CGraph
-CGraph is a simple **C language** graph theory algorithm library.
-It provides common graph algorithms and convenient iterator interfaces, suitable for learning.
+# CGraph
 
-## Features
-- Topological Sort
-- Unweighted shortest path (BFS)
-- Weighted shortest path (Dijkstra, Bellman-Ford, Floyd-Warshall)
-- Minimum Spanning Tree (Prim, Kruskal)
-- Maximum Flow (Edmonds-Karp)
-- Euler Path & Circuit
-- Articulation Points Detection
-- Strongly Connected Components
-- AOA Network Critical Path Analysis (Critical Path Method)
-- Iterator Interfaces (traverse vertices and edges)
+**CGraph** 是一个使用 C 语言编写的轻量级图结构库。
+
+这个项目只负责维护图的拓扑结构，不负责储存边权、点权等用户数据。用户可以直接通过顶点 ID 和边 ID 使用数组储存自己的数据，例如：
+
+```c
+dist[vid]
+weight[eid]
+visited[vid]
+```
+
+这种设计提供了很高的自由度，可以自由决定数据组织方式，同时减少额外封装带来的性能和内存开销。
+
+---
+
+### 项目特点：
+
+* 支持有向图和无向图
+* 顶点和边拥有稳定的 ID
+* 支持动态增删点边
+* 提供顶点与邻边迭代器
+* 支持有向图出边和入边遍历
+* 内存占用低
+* python api
+
+---
+
+### 实现算法
+
+* Dijkstra
+* Bellman-Ford (SPFA)
+* 最大流
+* 最小生成树
+* 强连通分量
+* 割点
+
+在 |V| < 10^5，|E| < 10^7，运行时间是可接受的。
+
+---
+
+### 适用场景
+
+* 中小型动态图
+* 斯巴达式软件开发
+
+### 不适合的场景
+
+* 大规模静态图大量遍历
+* 需要高级封装的图框架
+* 需要自动管理属性数据
+* 需要完整安全检查
+
+这个项目更偏向底层数据结构，强调性能、可控性和较低的内存开销，而不是功能完整的大型图框架。
+
+---
+
+## Unsafe
+
+CGraph 默认**不会**进行大量安全检查。
+
+例如：
+
+* 不会自动检查 ID 是否有效
+* 不会阻止访问已删除的点或边
+* 不保证错误输入行为安全
+* 部分接口默认要求调用者保证参数合法
+
+如果使用不当，可能导致未定义行为。

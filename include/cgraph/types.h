@@ -42,7 +42,7 @@ typedef struct {
 
 typedef struct {
   const CGraph *view;
-  CGraphId vert;
+  CGraphId vert; // not vid
   CGraphBool dir_global;
   CGraphBool *dir_current;
   CGraphId edge[];
@@ -50,7 +50,7 @@ typedef struct {
 
 typedef struct {
   const CGraph *view;
-  CGraphId vert;
+  CGraphId vert; // not vid if vert-iter
   CGraphId edge;
   CGraphBool dir_current;
   CGraphBool dir_global;

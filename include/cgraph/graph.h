@@ -16,9 +16,13 @@ void cgraphDeleteVert(CGraph *graph, CGraphId vid);
 
 CGraphId cgraphAddEdge(CGraph *graph, CGraphId from, CGraphId to);
 void cgraphAddEdges(CGraph *graph, CGraphSize count, const CGraphId endpoints[][2]);
+// do not check validity
 void cgraphDeleteEdge(CGraph *graph, CGraphId eid);
+// do not check validity
 void cgraphReverseEdge(const CGraph *graph, CGraphId eid);
+// do not check validity
 CGraphId cgraphFindEdge(const CGraph *graph, CGraphId from, CGraphId to);
+// do not check validity
 void cgraphWhereEdgeFromTo(const CGraph *graph, CGraphId eid, CGraphId *from, CGraphId *to);
 
 void cgraphSetVertResizeCallback(CGraph *graph, CGraphResizeCallback callback);

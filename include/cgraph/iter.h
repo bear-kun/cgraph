@@ -15,6 +15,7 @@ CGraphBool cgraphExplorerNextVert(CGraphExplorer *iter, CGraphId *vid);
 // reverse of the insertion order
 CGraphBool cgraphExplorerNextEdge(CGraphExplorer *iter, CGraphId vid, CGraphId *eid,
                                   CGraphId *other);
+
 // iter
 CGraphIter cgraphGetVertIter(const CGraph *graph);
 CGraphIter cgraphGetEdgeIter(const CGraph *graph, CGraphId vid, CGraphBool dir);

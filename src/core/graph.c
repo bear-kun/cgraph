@@ -4,6 +4,7 @@
 
 #define OUT CGRAPH_OUT
 #define IN CGRAPH_IN
+#define FREE_NEXT next[OUT]
 
 static void *safeMalloc(const size_t size) {
   void *mem = malloc(size);
@@ -173,26 +174,6 @@ static void vertUnlinkAndDelete(CGraph *graph, const CGraphId vid) {
   swap(graph->vert.array, i, --graph->vert.count);
 }
 
-CGraphId cgraphAddVert(CGraph *const graph) {
-  if (graph->vert.count == graph->vert.capacity) vertResize(graph, graph->vert.capacity);
-  return vertInsertNew(graph);
-}
-
-void cgraphAddVertices(CGraph *graph, const CGraphSize count) {
-  if (graph->vert.count + count > graph->vert.capacity) {
-    vertResize(graph, graph->vert.count + count);
-  }
-  for (CGraphSize i = 0; i < count; i++) {
-    vertInsertNew(graph);
-  }
-}
-
-void cgraphDeleteVert(CGraph *graph, const CGraphId vid) {
-  vertUnlinkAndDelete(graph, vid);
-}
-
-#define FREE_NEXT next[OUT]
-
 static CGraphId edgeGetNew(CGraph *graph, const CGraphId from, const CGraphId to) {
   CGraphId eid;
   if (graph->edge.count == graph->edge.range) {
@@ -232,6 +213,42 @@ static CGraphBool edgeUnlink(const CGraph *graph, const CGraphId vid, const CGra
     }
   }
   return false;
+}
+
+CGraphId cgraphAddVert(CGraph *const graph) {
+  if (graph->vert.count == graph->vert.capacity) vertResize(graph, graph->vert.capacity);
+  return vertInsertNew(graph);
+}
+
+void cgraphAddVertices(CGraph *graph, const CGraphSize count) {
+  if (graph->vert.count + count > graph->vert.capacity) {
+    vertResize(graph, graph->vert.count + count);
+  }
+  for (CGraphSize i = 0; i < count; i++) {
+    vertInsertNew(graph);
+  }
+}
+
+void cgraphDeleteVert(CGraph *graph, const CGraphId vid) {
+  CGraphId eid = graph->edge.head[OUT][vid];
+  while (eid != INVALID_ID) {
+    const CGraphId next = graph->edge.next[OUT][eid];
+    edgeUnlink(graph, graph->edge.xor[eid] ^ vid, eid, IN);
+    edgeDelete(graph, eid);
+    eid = next;
+  }
+  graph->edge.head[OUT][vid] = INVALID_ID;
+
+  eid = graph->edge.head[IN][vid];
+  while (eid != INVALID_ID) {
+    const CGraphId next = graph->edge.next[IN][eid];
+    edgeUnlink(graph, graph->edge.xor[eid] ^ vid, eid, OUT);
+    edgeDelete(graph, eid);
+    eid = next;
+  }
+  graph->edge.head[IN][vid] = INVALID_ID;
+
+  vertUnlinkAndDelete(graph, vid);
 }
 
 CGraphId cgraphAddEdge(CGraph *const graph, const CGraphId from, const CGraphId to) {
