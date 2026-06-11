@@ -28,4 +28,7 @@ void cgraphWhereEdgeFromTo(const CGraph *graph, CGraphId eid, CGraphId *from, CG
 void cgraphSetVertResizeCallback(CGraph *graph, CGraphResizeCallback callback);
 void cgraphSetEdgeResizeCallback(CGraph *graph, CGraphResizeCallback callback);
 
+void cgraphSaveBinary(const CGraph *graph, const char *path);
+void cgraphLoadBinary(CGraph *graph, const char *path); // Don't init graph !
+
 #endif // GRAPH_GRAPH_H

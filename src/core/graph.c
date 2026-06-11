@@ -1,6 +1,7 @@
 #include "cgraph/graph.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #define OUT CGRAPH_OUT
 #define IN CGRAPH_IN
@@ -322,4 +323,102 @@ void cgraphSetVertResizeCallback(CGraph *graph, const CGraphResizeCallback callb
 
 void cgraphSetEdgeResizeCallback(CGraph *graph, const CGraphResizeCallback callback) {
   graph->edge.resize = callback;
+}
+
+typedef struct {
+  struct {
+    CGraphSize count, range;
+  } vert;
+
+  struct {
+    CGraphBool directed;
+    CGraphSize count, range;
+    CGraphId free;
+  } edge;
+} CGraphHeader;
+
+void cgraphSaveBinary(const CGraph *graph, const char *path) {
+  FILE *file = fopen(path, "wb");
+  if (!file) {
+    perror("cgraph");
+    return;
+  }
+
+  const CGraphHeader header = {
+      .vert = {
+          .count = graph->vert.count,
+          .range = graph->vert.range
+      },
+
+      .edge = {
+          .directed = graph->edge.directed,
+          .count = graph->edge.count,
+          .range = graph->edge.range,
+          .free = graph->edge.free
+      }
+  };
+
+  fwrite(&header, sizeof(CGraphHeader), 1, file);
+  fwrite(graph->vert.array, sizeof(CGraphId), header.vert.range, file);
+  fwrite(graph->edge.head[OUT], sizeof(CGraphId), header.vert.range, file);
+  fwrite(graph->edge.next[OUT], sizeof(CGraphId), header.edge.range, file);
+  fwrite(graph->edge.to, sizeof(CGraphId), header.edge.range, file);
+  fclose(file);
+}
+
+void cgraphLoadBinary(CGraph *graph, const char *path) {
+  FILE *file = fopen(path, "rb");
+  if (!file) {
+    perror("cgraph");
+    return;
+  }
+
+  CGraphHeader header;
+  size_t read = fread(&header, sizeof(CGraphHeader), 1, file);
+  if (read != sizeof(CGraphHeader)) goto err1;
+
+  reserveGraph(graph, header.edge.directed, header.vert.range, header.edge.range);
+  graph->vert.count = header.vert.count;
+  graph->vert.range = header.vert.range;
+  graph->edge.count = header.edge.count;
+  graph->edge.range = header.edge.range;
+  graph->edge.free = header.edge.free;
+
+  read = fread(graph->vert.array, sizeof(CGraphId), header.vert.range, file);
+  if (read != header.vert.range) goto err2;
+
+  read = fread(graph->edge.head[OUT], sizeof(CGraphId), header.vert.range, file);
+  if (read != header.vert.range) goto err2;
+
+  read = fread(graph->edge.next[OUT], sizeof(CGraphId), header.edge.range, file);
+  if (read != header.edge.range) goto err2;
+
+  read = fread(graph->edge.to, sizeof(CGraphId), header.edge.range, file);
+  if (read != header.edge.range) goto err2;
+
+  memset(graph->vert.degree[OUT], 0, sizeof(CGraphInt) * header.vert.range);
+  memset(graph->edge.head[IN], INVALID_ID, sizeof(CGraphId) * header.vert.range);
+  if (header.edge.directed) {
+    memset(graph->vert.degree[IN], 0, sizeof(CGraphInt) * header.vert.range);
+  }
+
+  const CGraphId *next = graph->edge.next[OUT];
+  for (CGraphSize i = 0; i < header.vert.count; i++) {
+    const CGraphId from = graph->vert.array[i];
+    for (CGraphId eid = graph->edge.head[OUT][from]; eid != INVALID_ID; eid = next[eid]) {
+      const CGraphId to = graph->edge.to[eid];
+      graph->vert.degree[OUT][from]++;
+      edgeInsert(graph, to, eid, IN);
+      graph->edge.xor[eid] = from ^ to;
+    }
+  }
+
+  fclose(file);
+  return;
+
+err2:
+  cgraphRelease(graph);
+err1:
+  fprintf(stderr, "cgraph: failed to read or incomplete : %s .\n", path);
+  fclose(file);
 }

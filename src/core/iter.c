@@ -117,10 +117,10 @@ again:
 
 void cgraphTraverseEdges(const CGraph *graph, void *data,
                          void (*callback)(CGraphId, CGraphId, CGraphId, void *)) {
-  const CGraphId *next = graph->edge.next[OUT];
+  const CGraphId *head = graph->edge.head[OUT], *next = graph->edge.next[OUT];
   for (CGraphId v = 0; v < graph->vert.count; v++) {
     const CGraphId from = graph->vert.array[v];
-    for (CGraphId eid = graph->edge.head[OUT][from]; eid != INVALID_ID; eid = next[eid]) {
+    for (CGraphId eid = head[from]; eid != INVALID_ID; eid = next[eid]) {
       callback(from, eid, graph->edge.xor[eid] ^ from, data);
     }
   }
