@@ -3,6 +3,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+
+#endif
+
 void cgraphInit(CGraph *graph, CGraphBool directed, CGraphSize vertCap, CGraphSize edgeCap);
 void cgraphRelease(const CGraph *graph);
 void cgraphCopy(CGraph *dst, const CGraph *src);
@@ -31,4 +36,7 @@ void cgraphSetEdgeResizeCallback(CGraph *graph, CGraphResizeCallback callback);
 void cgraphSaveBinary(const CGraph *graph, const char *path);
 void cgraphLoadBinary(CGraph *graph, const char *path); // Don't init graph !
 
+#ifdef __cplusplus
+}
+#endif
 #endif // GRAPH_GRAPH_H

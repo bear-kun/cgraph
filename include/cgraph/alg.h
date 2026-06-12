@@ -3,6 +3,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+
+#endif
+
 void cgraphCriticalPath(const CGraph *aoa, const TimeType duration[], CGraphId successor[],
                         TimeType earlyStart[], TimeType lateStart[]);
 
@@ -53,4 +58,7 @@ CGraphBool cgraphShortestBellmanFord(const CGraph *graph, const WeightType weigh
 void FloydWarshallWeightedPath(WeightType **weight, CGraphSize vertNum, CGraphId **path,
                                WeightType **distance);
 
+#ifdef __cplusplus
+}
+#endif
 #endif // GRAPH_ALG_H

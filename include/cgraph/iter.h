@@ -3,6 +3,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C" {
+
+#endif
+
 // explorer
 CGraphExplorer *cgraphGetExplorer(const CGraph *graph, CGraphBool dir);
 void cgraphExplorerRelease(CGraphExplorer *iter);
@@ -27,4 +32,7 @@ CGraphBool cgraphIterNextEdge(CGraphIter *iter, CGraphId *eid, CGraphId *other);
 void cgraphTraverseEdges(const CGraph *graph, void *data,
                          void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *data));
 
+#ifdef __cplusplus
+}
+#endif
 #endif // GRAPH_ITER_H
