@@ -64,14 +64,14 @@ CGraphBool cgraphExplorerNextEdge(CGraphExplorer *iter, const CGraphId vid, CGra
       return false;
     }
     *eid = *curr;
-    *other = iter->view->edge.xor[*curr] ^ vid;
+    *other = iter->view->edge.xor_[*curr] ^ vid;
     *curr = iter->view->edge.next[*dir][*curr];
     return true;
   }
 
   if (*curr == INVALID_ID) return false;
   *eid = *curr;
-  *other = iter->view->edge.xor[*curr] ^ vid;
+  *other = iter->view->edge.xor_[*curr] ^ vid;
   *curr = iter->view->edge.next[iter->dir_global][*curr];
   return true;
 }
@@ -109,7 +109,7 @@ again:
   }
 
   *eid = iter->edge;
-  *other = iter->view->edge.xor[iter->edge] ^ iter->vert;
+  *other = iter->view->edge.xor_[iter->edge] ^ iter->vert;
   iter->edge = iter->view->edge.next[iter->dir_current][iter->edge];
   return true;
 }
@@ -121,7 +121,7 @@ void cgraphTraverseEdges(const CGraph *graph, void *data,
   for (CGraphId v = 0; v < graph->vert.count; v++) {
     const CGraphId from = graph->vert.array[v];
     for (CGraphId eid = head[from]; eid != INVALID_ID; eid = next[eid]) {
-      callback(from, eid, graph->edge.xor[eid] ^ from, data);
+      callback(from, eid, graph->edge.xor_[eid] ^ from, data);
     }
   }
 }

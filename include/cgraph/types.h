@@ -35,7 +35,7 @@ typedef struct {
     CGraphBool directed;
     CGraphSize capacity, count, range;
     CGraphId free, *head[2], *next[2];
-    CGraphId *xor, *to;
+    CGraphId *xor_, *to;
     CGraphResizeCallback resize;
   } edge;
 } CGraph;

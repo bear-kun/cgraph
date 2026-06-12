@@ -27,7 +27,7 @@ static void callback(const CGraphId from, const CGraphId eid, const CGraphId to,
 static void residualInit(Residual *residual, const CGraph *network) {
   residual->offset = malloc((network->vert.range + 1) * sizeof(CGraphId));
   residual->edges = malloc(2 * network->edge.count * sizeof(CGraphId));
-  residual->edgeXor = network->edge.xor;
+  residual->edgeXor = network->edge.xor_;
   residual->cursor = residual->offset + 1;
 
   CGraphId begin = 0;
