@@ -8,18 +8,18 @@ typedef struct {
   CGraphId elems[];
 } CGraphStack;
 
-CGraphStack *cgraphStackCreate(CGraphSize capacity);
-void cgraphStackRelease(CGraphStack *stack);
+CGraphStack *cgraph_new_stack(CGraphSize capacity);
+void cgraph_delete_stack(CGraphStack *stack);
 
-static inline void cgraphStackPush(CGraphStack *const stack, const CGraphId item) {
+static inline void cgraph_stack_push(CGraphStack *const stack, const CGraphId item) {
   stack->elems[stack->size++] = item;
 }
 
-static inline CGraphId cgraphStackPop(CGraphStack *const stack) {
+static inline CGraphId cgraph_stack_pop(CGraphStack *const stack) {
   return stack->elems[--stack->size];
 }
 
-static inline CGraphBool cgraphStackEmpty(const CGraphStack *const stack) {
+static inline CGraphBool cgraph_stack_empty(const CGraphStack *const stack) {
   return stack->size == 0;
 }
 

@@ -20,15 +20,12 @@ typedef float WeightType;
 typedef WeightType TimeType; // aoa
 typedef WeightType FlowType; // flow
 
-typedef void (*CGraphResizeCallback)(CGraphSize oldCap, CGraphSize newCap);
-
 // O(5 * V + 4 * E)
 typedef struct {
   struct {
     CGraphSize capacity, count, range;
     CGraphId *array;
     CGraphInt *degree[2];
-    CGraphResizeCallback resize;
   } vert;
 
   struct {
@@ -36,7 +33,6 @@ typedef struct {
     CGraphSize capacity, count, range;
     CGraphId free, *head[2], *next[2];
     CGraphId *xor_, *to;
-    CGraphResizeCallback resize;
   } edge;
 } CGraph;
 

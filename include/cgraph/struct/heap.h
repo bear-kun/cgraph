@@ -9,17 +9,17 @@ typedef struct {
   CGraphId elems[];
 } CGraphHeap;
 
-CGraphHeap *cgraphHeapCreate(CGraphSize capacity, const WeightType *weights);
-void cgraphHeapPush(CGraphHeap *heap, CGraphId id);
-CGraphId cgraphHeapPop(CGraphHeap *heap);
-void cgraphHeapRelease(CGraphHeap *heap);
-void cgraphHeapBuild(CGraphHeap *heap);
+CGraphHeap *cgraph_new_heap(CGraphSize capacity, const WeightType *weights);
+void cgraph_delete_heap(CGraphHeap *heap);
+void cgraph_heap_push(CGraphHeap *heap, CGraphId id);
+CGraphId cgraph_heap_pop(CGraphHeap *heap);
+void cgraph_heap_build(CGraphHeap *heap);
 
-static inline CGraphBool cgraphHeapEmpty(const CGraphHeap *const heap) {
+static inline CGraphBool cgraph_heap_empty(const CGraphHeap *const heap) {
   return heap->size == 0;
 }
 
-static void cgraphHeapPreBuild(CGraphHeap *heap, const CGraphId id) {
+static void cgraph_heap_prebuild(CGraphHeap *heap, const CGraphId id) {
   heap->elems[++heap->size] = id;
 }
 

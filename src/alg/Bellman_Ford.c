@@ -21,7 +21,7 @@ static void callback(const CGraphId from, const CGraphId eid, const CGraphId to,
   csr->edges[csr->cursor[from]++] = (BFEdge){to, weights[eid]};
 }
 
-static void initCSR(CSR *csr, const CGraph *graph, const WeightType *weights) {
+static void init_csr(CSR *csr, const CGraph *graph, const WeightType *weights) {
   csr->offset = malloc((graph->vert.range + 1) * sizeof(CGraphId));
   csr->edges = malloc(graph->edge.count * sizeof(BFEdge));
   csr->cursor = csr->offset + 1;
@@ -34,21 +34,21 @@ static void initCSR(CSR *csr, const CGraph *graph, const WeightType *weights) {
   }
 
   const void *data[2] = {csr, weights};
-  cgraphTraverseEdges(graph, data, callback);
+  cgraph_traverse_edges(graph, data, callback);
 }
 
-static void releaseCSR(const CSR *csr) {
+static void release_csr(const CSR *csr) {
   free(csr->offset);
   free(csr->edges);
 }
 
 // SPFA, Shortest Path Faster Algorithm
-CGraphBool cgraphShortestBellmanFord(const CGraph *graph, const WeightType weights[],
-                                     CGraphId predecessor[], const CGraphId source) {
+CGraphBool cgraph_shortest_bellman_ford(const CGraph *graph, const WeightType weights[],
+                                        CGraphId predecessor[], const CGraphId source) {
   CSR csr;
-  initCSR(&csr, graph, weights);
-  CGraphQueue *queue = cgraphQueueCreate(graph->vert.count);
-  CGraphBool *isInQueue = calloc(graph->vert.range, sizeof(CGraphBool));
+  init_csr(&csr, graph, weights);
+  CGraphQueue *queue = cgraph_new_queue(graph->vert.count);
+  CGraphBool *in_queue = calloc(graph->vert.range, sizeof(CGraphBool));
   CGraphSize *depth = calloc(graph->vert.range, sizeof(CGraphSize));
   WeightType *distance = malloc(graph->vert.range * sizeof(WeightType));
   memset(predecessor, INVALID_ID, graph->vert.range * sizeof(CGraphId));
@@ -57,10 +57,10 @@ CGraphBool cgraphShortestBellmanFord(const CGraph *graph, const WeightType weigh
   CGraphBool success = true;
   depth[source] = 1;
   distance[source] = 0;
-  cgraphQueuePush(queue, source);
-  while (!cgraphQueueEmpty(queue)) {
-    const CGraphId from = cgraphQueuePop(queue);
-    isInQueue[from] = false;
+  cgraph_queue_push(queue, source);
+  while (!cgraph_queue_empty(queue)) {
+    const CGraphId from = cgraph_queue_pop(queue);
+    in_queue[from] = false;
 
     const CGraphId end = csr.offset[from + 1];
     for (CGraphId e = csr.offset[from]; e < end; e++) {
@@ -77,18 +77,18 @@ CGraphBool cgraphShortestBellmanFord(const CGraph *graph, const WeightType weigh
         goto end;
       }
 
-      if (!isInQueue[to]) {
-        cgraphQueuePush(queue, to);
-        isInQueue[to] = true;
+      if (!in_queue[to]) {
+        cgraph_queue_push(queue, to);
+        in_queue[to] = true;
       }
     }
   }
 
 end:
   free(depth);
-  free(isInQueue);
+  free(in_queue);
   free(distance);
-  cgraphQueueRelease(queue);
-  releaseCSR(&csr);
+  cgraph_delete_queue(queue);
+  release_csr(&csr);
   return success;
 }

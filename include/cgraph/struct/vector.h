@@ -8,9 +8,9 @@ typedef struct {
   CGraphId *elems;
 } CGraphVector;
 
-#define cgraphVectorCreate() (CGraphVector){0}
+#define cgraph_new_vector() (CGraphVector){0}
 
-void cgraphVectorRelease(const CGraphVector *vector);
-void cgraphVectorPush(CGraphVector *vector, CGraphId item);
+void cgraph_delete_vector(const CGraphVector *vector);
+void cgraph_vector_push(CGraphVector *vector, CGraphId item);
 
 #endif // GRAPH_LINKED_PATH_H

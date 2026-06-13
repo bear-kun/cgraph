@@ -1,8 +1,7 @@
 #include "cgraph/struct/pairing_heap.h"
 #include <stdlib.h>
 
-CGraphPairingHeap *cgraphPairingHeapCreate(const CGraphSize capacity,
-                                           const WeightType *weights) {
+CGraphPairingHeap *cgraph_new_pairing_heap(const CGraphSize capacity, const WeightType *weights) {
   CGraphPairingHeap *heap =
       malloc(sizeof(CGraphPairingHeap)
              + capacity * sizeof(PairingHeapNode) // nodes
@@ -13,7 +12,7 @@ CGraphPairingHeap *cgraphPairingHeapCreate(const CGraphSize capacity,
   return heap;
 }
 
-void cgraphPairingHeapRelease(CGraphPairingHeap *heap) { free(heap); }
+void cgraph_delete_pairing_heap(CGraphPairingHeap *heap) { free(heap); }
 
 static PairingHeapNode *meld(PairingHeapNode *left, PairingHeapNode *right) {
   if (!left) return right;
@@ -35,8 +34,7 @@ static PairingHeapNode *meld(PairingHeapNode *left, PairingHeapNode *right) {
   return right;
 }
 
-static PairingHeapNode *combine(PairingHeapNode *parent,
-                                 PairingHeapNode **stack) {
+static PairingHeapNode *combine(PairingHeapNode *parent, PairingHeapNode **stack) {
   if (!parent || !parent->left) return parent;
 
   PairingHeapNode **top = stack - 1;
@@ -55,7 +53,7 @@ static PairingHeapNode *combine(PairingHeapNode *parent,
   return *stack;
 }
 
-void cgraphPairingHeapPush(CGraphPairingHeap *heap, const CGraphId id) {
+void cgraph_pairing_heap_push(CGraphPairingHeap *heap, const CGraphId id) {
   PairingHeapNode *node = heap->nodes + id;
   node->weight = heap->weights[id];
   node->right = NULL;
@@ -67,13 +65,13 @@ void cgraphPairingHeapPush(CGraphPairingHeap *heap, const CGraphId id) {
   heap->root = meld(heap->root, node);
 }
 
-CGraphId cgraphPairingHeapPop(CGraphPairingHeap *heap) {
+CGraphId cgraph_pairing_heap_pop(CGraphPairingHeap *heap) {
   const CGraphId root = (CGraphId)(heap->root - heap->nodes);
   heap->root = combine(heap->root->right, heap->stack);
   return root;
 }
 
-void cgraphPairingHeapUpdate(CGraphPairingHeap *heap, const CGraphId id) {
+void cgraph_pairing_heap_update(CGraphPairingHeap *heap, const CGraphId id) {
   PairingHeapNode *node = heap->nodes + id;
   node->weight = heap->weights[id];
 

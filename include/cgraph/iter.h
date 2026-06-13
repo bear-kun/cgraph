@@ -6,31 +6,32 @@
 #ifdef __cplusplus
 extern "C" {
 
+
 #endif
 
 // explorer
-CGraphExplorer *cgraphGetExplorer(const CGraph *graph, CGraphBool dir);
-void cgraphExplorerRelease(CGraphExplorer *iter);
+CGraphExplorer *cgraph_new_explorer(const CGraph *graph, CGraphBool dir);
+void cgraph_delete_explorer(CGraphExplorer *explorer);
 
-void cgraphExplorerResetVert(CGraphExplorer *iter);
-void cgraphExplorerResetEdge(CGraphExplorer *iter, CGraphId vid);
-void cgraphExplorerResetAllEdges(CGraphExplorer *iter, CGraphBool dir);
+void cgraph_explorer_reset_vertex(CGraphExplorer *explorer);
+void cgraph_explorer_reset_edge(CGraphExplorer *explorer, CGraphId vid);
+void cgraph_explorer_reset_all_edges(CGraphExplorer *explorer, CGraphBool dir);
 
-CGraphBool cgraphExplorerNextVert(CGraphExplorer *iter, CGraphId *vid);
+CGraphBool cgraph_explorer_next_vertex(CGraphExplorer *explorer, CGraphId *vid);
 // reverse of the insertion order
-CGraphBool cgraphExplorerNextEdge(CGraphExplorer *iter, CGraphId vid, CGraphId *eid,
-                                  CGraphId *other);
+CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, CGraphId vid, CGraphId *eid,
+                                     CGraphId *other);
 
 // iter
-CGraphIter cgraphGetVertIter(const CGraph *graph);
-CGraphIter cgraphGetEdgeIter(const CGraph *graph, CGraphId vid, CGraphBool dir);
+CGraphIter cgraph_get_vertex_iter(const CGraph *graph);
+CGraphIter cgraph_get_edge_iter(const CGraph *graph, CGraphId vid, CGraphBool dir);
 
-CGraphBool cgraphIterNextVert(CGraphIter *iter, CGraphId *vid);
+CGraphBool cgraph_iter_next_vertex(CGraphIter *iter, CGraphId *vid);
 // reverse of the insertion order
-CGraphBool cgraphIterNextEdge(CGraphIter *iter, CGraphId *eid, CGraphId *other);
+CGraphBool cgraph_iter_next_edge(CGraphIter *iter, CGraphId *eid, CGraphId *other);
 
-void cgraphTraverseEdges(const CGraph *graph, void *data,
-                         void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *data));
+void cgraph_traverse_edges(const CGraph *graph, void *data,
+                           void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *data));
 
 #ifdef __cplusplus
 }

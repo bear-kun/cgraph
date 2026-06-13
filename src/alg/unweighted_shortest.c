@@ -3,27 +3,27 @@
 #include "cgraph/struct/queue.h"
 #include <string.h>
 
-void cgraphUnweightedShortest(const CGraph *const graph, CGraphId predecessor[],
-                              const CGraphId source, const CGraphId target) {
-  CGraphQueue *queue = cgraphQueueCreate(graph->vert.count);
+void cgraph_unweighted_shortest(const CGraph *const graph, CGraphId predecessor[],
+                                const CGraphId source, const CGraphId target) {
+  CGraphQueue *queue = cgraph_new_queue(graph->vert.count);
   memset(predecessor, INVALID_ID, sizeof(CGraphId) * graph->vert.range);
 
   predecessor[source] = source;
-  cgraphQueuePush(queue, source);
-  while (!cgraphQueueEmpty(queue)) {
-    const CGraphId from = cgraphQueuePop(queue);
+  cgraph_queue_push(queue, source);
+  while (!cgraph_queue_empty(queue)) {
+    const CGraphId from = cgraph_queue_pop(queue);
 
     CGraphId eid, to;
-    CGraphIter iter = cgraphGetEdgeIter(graph, from, CGRAPH_OUT);
-    while (cgraphIterNextEdge(&iter, &eid, &to)) {
+    CGraphIter iter = cgraph_get_edge_iter(graph, from, CGRAPH_OUT);
+    while (cgraph_iter_next_edge(&iter, &eid, &to)) {
       if (predecessor[to] == INVALID_ID) {
         predecessor[to] = from;
         if (to == target) goto end;
-        cgraphQueuePush(queue, to);
+        cgraph_queue_push(queue, to);
       }
     }
   }
 
-  end:
-    cgraphQueueRelease(queue);
+end:
+  cgraph_delete_queue(queue);
 }

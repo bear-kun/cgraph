@@ -5,9 +5,10 @@
 
 // 视作只有右子树符合约定的搜索二叉树
 typedef struct PairingHeapNode_ PairingHeapNode;
+
 struct PairingHeapNode_ {
   WeightType weight;
-  PairingHeapNode *left;  // sibling
+  PairingHeapNode *left; // sibling
   PairingHeapNode *right; // child
   PairingHeapNode **parent;
 };
@@ -19,14 +20,13 @@ typedef struct {
   PairingHeapNode nodes[0];
 } CGraphPairingHeap;
 
-CGraphPairingHeap *cgraphPairingHeapCreate(CGraphSize capacity,
-                                         const WeightType *weights);
-void cgraphPairingHeapRelease(CGraphPairingHeap *heap);
-void cgraphPairingHeapPush(CGraphPairingHeap *heap, CGraphId id);
-CGraphId cgraphPairingHeapPop(CGraphPairingHeap *heap);
-void cgraphPairingHeapUpdate(CGraphPairingHeap *heap, CGraphId id);
+CGraphPairingHeap *cgraph_new_pairing_heap(CGraphSize capacity, const WeightType *weights);
+void cgraph_delete_pairing_heap(CGraphPairingHeap *heap);
+void cgraph_pairing_heap_push(CGraphPairingHeap *heap, CGraphId id);
+CGraphId cgraph_pairing_heap_pop(CGraphPairingHeap *heap);
+void cgraph_pairing_heap_update(CGraphPairingHeap *heap, CGraphId id);
 
-static inline CGraphBool cgraphPairingHeapEmpty(const CGraphPairingHeap *heap) {
+static inline CGraphBool cgraph_pairing_heap_empty(const CGraphPairingHeap *heap) {
   return !heap->root;
 }
 

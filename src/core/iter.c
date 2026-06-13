@@ -5,82 +5,83 @@
 #define OUT CGRAPH_OUT
 #define IN CGRAPH_IN
 
-CGraphExplorer *cgraphGetExplorer(const CGraph *graph, const CGraphBool dir) {
-  CGraphExplorer *iter;
+CGraphExplorer *cgraph_new_explorer(const CGraph *graph, const CGraphBool dir) {
+  CGraphExplorer *explorer;
   if (graph->edge.directed) {
-    iter = malloc(sizeof(CGraphExplorer) + graph->vert.range * sizeof(CGraphId));
-    iter->dir_current = NULL;
+    explorer = malloc(sizeof(CGraphExplorer) + graph->vert.range * sizeof(CGraphId));
+    explorer->dir_current = NULL;
   } else {
-    iter = malloc(
+    explorer = malloc(
         sizeof(CGraphExplorer) + graph->vert.range * (sizeof(CGraphId) + sizeof(CGraphBool)));
-    iter->dir_current = (CGraphBool *)(iter->edge + graph->vert.range);
+    explorer->dir_current = (CGraphBool *)(explorer->edge + graph->vert.range);
   }
-  iter->view = graph;
-  cgraphExplorerResetVert(iter);
-  cgraphExplorerResetAllEdges(iter, dir);
-  return iter;
+  explorer->view = graph;
+  cgraph_explorer_reset_vertex(explorer);
+  cgraph_explorer_reset_all_edges(explorer, dir);
+  return explorer;
 }
 
-void cgraphExplorerRelease(CGraphExplorer *iter) { free(iter); }
+void cgraph_delete_explorer(CGraphExplorer *explorer) { free(explorer); }
 
-void cgraphExplorerResetVert(CGraphExplorer *iter) {
-  iter->vert = 0;
+void cgraph_explorer_reset_vertex(CGraphExplorer *explorer) {
+  explorer->vert = 0;
 }
 
-void cgraphExplorerResetEdge(CGraphExplorer *iter, const CGraphId vid) {
-  iter->edge[vid] = iter->view->edge.head[iter->dir_global][vid];
-  if (iter->dir_current) iter->dir_current[vid] = iter->dir_global;
+void cgraph_explorer_reset_edge(CGraphExplorer *explorer, const CGraphId vid) {
+  explorer->edge[vid] = explorer->view->edge.head[explorer->dir_global][vid];
+  if (explorer->dir_current) explorer->dir_current[vid] = explorer->dir_global;
 }
 
-void cgraphExplorerResetAllEdges(CGraphExplorer *iter, const CGraphBool dir) {
-  iter->dir_global = dir;
-  memcpy(iter->edge, iter->view->edge.head[dir], iter->view->vert.range * sizeof(CGraphId));
-  if (iter->dir_current)
-    memset(iter->dir_current, dir,
-           iter->view->vert.range * sizeof(CGraphBool));
+void cgraph_explorer_reset_all_edges(CGraphExplorer *explorer, const CGraphBool dir) {
+  explorer->dir_global = dir;
+  memcpy(explorer->edge, explorer->view->edge.head[dir],
+         explorer->view->vert.range * sizeof(CGraphId));
+  if (explorer->dir_current)
+    memset(explorer->dir_current, dir,
+           explorer->view->vert.range * sizeof(CGraphBool));
 }
 
-CGraphBool cgraphExplorerNextVert(CGraphExplorer *iter, CGraphId *vid) {
-  if (iter->vert == iter->view->vert.count) return false;
-  *vid = iter->view->vert.array[iter->vert++];
+CGraphBool cgraph_explorer_next_vertex(CGraphExplorer *explorer, CGraphId *vid) {
+  if (explorer->vert == explorer->view->vert.count) return false;
+  *vid = explorer->view->vert.array[explorer->vert++];
   return true;
 }
 
-CGraphBool cgraphExplorerNextEdge(CGraphExplorer *iter, const CGraphId vid, CGraphId *eid,
-                                  CGraphId *other) {
-  CGraphId *curr = iter->edge + vid;
+CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, const CGraphId vid, CGraphId *eid,
+                                     CGraphId *other) {
+  CGraphId *curr = explorer->edge + vid;
 
   // undirected
-  if (iter->dir_current) {
-    CGraphBool *dir = iter->dir_current + vid;
+  if (explorer->dir_current) {
+    CGraphBool *dir = explorer->dir_current + vid;
 
   again:
     if (*curr == INVALID_ID) {
-      if (*dir == iter->dir_global) {
+      if (*dir == explorer->dir_global) {
         *dir = !*dir;
-        *curr = iter->view->edge.head[*dir][vid];
+        *curr = explorer->view->edge.head[*dir][vid];
         goto again;
       }
       return false;
     }
     *eid = *curr;
-    *other = iter->view->edge.xor_[*curr] ^ vid;
-    *curr = iter->view->edge.next[*dir][*curr];
+    *other = explorer->view->edge.xor_[*curr] ^ vid;
+    *curr = explorer->view->edge.next[*dir][*curr];
     return true;
   }
 
   if (*curr == INVALID_ID) return false;
   *eid = *curr;
-  *other = iter->view->edge.xor_[*curr] ^ vid;
-  *curr = iter->view->edge.next[iter->dir_global][*curr];
+  *other = explorer->view->edge.xor_[*curr] ^ vid;
+  *curr = explorer->view->edge.next[explorer->dir_global][*curr];
   return true;
 }
 
-CGraphIter cgraphGetVertIter(const CGraph *graph) {
+CGraphIter cgraph_get_vertex_iter(const CGraph *graph) {
   return (CGraphIter){graph, 0};
 }
 
-CGraphIter cgraphGetEdgeIter(const CGraph *graph, const CGraphId vid, const CGraphBool dir) {
+CGraphIter cgraph_get_edge_iter(const CGraph *graph, const CGraphId vid, const CGraphBool dir) {
   return (CGraphIter){
       .view = graph,
       .vert = vid,
@@ -91,13 +92,13 @@ CGraphIter cgraphGetEdgeIter(const CGraph *graph, const CGraphId vid, const CGra
   };
 }
 
-CGraphBool cgraphIterNextVert(CGraphIter *iter, CGraphId *vid) {
+CGraphBool cgraph_iter_next_vertex(CGraphIter *iter, CGraphId *vid) {
   if (iter->vert == iter->view->vert.count) return false;
   *vid = iter->view->vert.array[iter->vert++];
   return true;
 }
 
-CGraphBool cgraphIterNextEdge(CGraphIter *iter, CGraphId *eid, CGraphId *other) {
+CGraphBool cgraph_iter_next_edge(CGraphIter *iter, CGraphId *eid, CGraphId *other) {
 again:
   if (iter->edge == INVALID_ID) {
     if (iter->undirected && iter->dir_current == iter->dir_global) {
@@ -114,9 +115,8 @@ again:
   return true;
 }
 
-
-void cgraphTraverseEdges(const CGraph *graph, void *data,
-                         void (*callback)(CGraphId, CGraphId, CGraphId, void *)) {
+void cgraph_traverse_edges(const CGraph *graph, void *data,
+                           void (*callback)(CGraphId, CGraphId, CGraphId, void *)) {
   const CGraphId *head = graph->edge.head[OUT], *next = graph->edge.next[OUT];
   for (CGraphId v = 0; v < graph->vert.count; v++) {
     const CGraphId from = graph->vert.array[v];

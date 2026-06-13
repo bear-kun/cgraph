@@ -16,39 +16,39 @@ typedef struct {
 static void forward(Package *pkg, const CGraphId from) {
   CGraphId eid, to;
   pkg->flag[from] = 1;
-  while (cgraphExplorerNextEdge(pkg->explorer, from, &eid, &to)) {
+  while (cgraph_explorer_next_edge(pkg->explorer, from, &eid, &to)) {
     if (!pkg->flag[to]) forward(pkg, to);
   }
-  cgraphStackPush(pkg->stack, from);
+  cgraph_stack_push(pkg->stack, from);
 }
 
 static void backward(Package *pkg, const CGraphId to) {
   CGraphId eid, from;
   pkg->flag[to] = 0;
   pkg->components[to] = pkg->counter;
-  while (cgraphExplorerNextEdge(pkg->explorer, to, &eid, &from)) {
+  while (cgraph_explorer_next_edge(pkg->explorer, to, &eid, &from)) {
     if (pkg->flag[from]) backward(pkg, from);
   }
 }
 
-void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
-  Package pkg ={
-    .explorer = cgraphGetExplorer(graph, CGRAPH_OUT),
-    .stack = cgraphStackCreate(graph->vert.count),
-    .flag = calloc(graph->vert.range, sizeof(CGraphBool)),
-    .components = components,
-    .counter = 0,
+void cgraph_strongly_connected(const CGraph *graph, CGraphId components[]) {
+  Package pkg = {
+      .explorer = cgraph_new_explorer(graph, CGRAPH_OUT),
+      .stack = cgraph_new_stack(graph->vert.count),
+      .flag = calloc(graph->vert.range, sizeof(CGraphBool)),
+      .components = components,
+      .counter = 0,
   };
   memset(components, INVALID_ID, graph->vert.range * sizeof(CGraphId));
 
   CGraphId from;
-  while (cgraphExplorerNextVert(pkg.explorer, &from)) {
+  while (cgraph_explorer_next_vertex(pkg.explorer, &from)) {
     if (pkg.flag[from] == 0) forward(&pkg, from);
   }
 
-  cgraphExplorerResetAllEdges(pkg.explorer, CGRAPH_IN);
-  while (!cgraphStackEmpty(pkg.stack)) {
-    const CGraphId vert = cgraphStackPop(pkg.stack);
+  cgraph_explorer_reset_all_edges(pkg.explorer, CGRAPH_IN);
+  while (!cgraph_stack_empty(pkg.stack)) {
+    const CGraphId vert = cgraph_stack_pop(pkg.stack);
     if (pkg.flag[vert] == 1) {
       backward(&pkg, vert);
       pkg.counter++;
@@ -56,6 +56,6 @@ void cgraphStronglyConnected(const CGraph *graph, CGraphId components[]) {
   }
 
   free(pkg.flag);
-  cgraphExplorerRelease(pkg.explorer);
-  cgraphStackRelease(pkg.stack);
+  cgraph_delete_explorer(pkg.explorer);
+  cgraph_delete_stack(pkg.stack);
 }

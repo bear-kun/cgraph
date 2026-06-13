@@ -5,11 +5,11 @@
 
 typedef CGraphId CGraphDisjointSet;
 
-CGraphDisjointSet *cgraphDisjointCreate(CGraphSize size);
-void cgraphDisjointRelease(CGraphDisjointSet *set);
+CGraphDisjointSet *cgraph_new_disjoint(CGraphSize size);
+void cgraph_delete_disjoint(CGraphDisjointSet *set);
 
-static void cgraphDisjointUnion(CGraphDisjointSet *set, const CGraphId class1,
-                               const CGraphId class2) {
+static void cgraph_disjoint_union(CGraphDisjointSet *set, const CGraphId class1,
+                                  const CGraphId class2) {
   CGraphId *neg_height = set;
   if (neg_height[class1] > neg_height[class2]) {
     set[class1] = class2;
@@ -19,7 +19,7 @@ static void cgraphDisjointUnion(CGraphDisjointSet *set, const CGraphId class1,
   }
 }
 
-static CGraphId cgraphDisjointFind(CGraphDisjointSet *set, const CGraphId id) {
+static CGraphId cgraph_disjoint_find(CGraphDisjointSet *set, const CGraphId id) {
   CGraphId cls;
   for (cls = id; set[cls] >= 0; cls = set[cls]);
   for (CGraphId i = id; i != cls;) {
