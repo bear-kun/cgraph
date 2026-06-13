@@ -1,6 +1,6 @@
-#include "cgraph/alg.h"
+#include "cgraph/algorithm.h"
 #include "cgraph/graph.h"
-#include "cgraph/iter.h"
+#include "cgraph/iterator.h"
 #include "cgraph/struct/pairing_heap.h"
 #include "cgraph/struct/disjoint_set.h"
 #include "cgraph/struct/heap.h"
@@ -14,14 +14,14 @@ void cgraph_spanning_tree_prim(const CGraph *graph, const WeightType weights[],
   for (CGraphId i = 0; i < graph->vert.range; i++) min_weight[i] = CGRAPH_INF;
 
   visited[root] = true;
-  predecessor[root] = INVALID_ID;
+  predecessor[root] = CGRAPH_INV_ID;
   cgraph_pairing_heap_push(heap, root);
   while (!cgraph_pairing_heap_empty(heap)) {
     const CGraphId from = cgraph_pairing_heap_pop(heap);
 
     CGraphId eid, to;
-    CGraphIter iter = cgraph_get_edge_iter(graph, from, CGRAPH_OUT);
-    while (cgraph_iter_next_edge(&iter, &eid, &to)) {
+    CGraphIterator iter = cgraph_get_edge_iterator(graph, from, CGRAPH_OUT);
+    while (cgraph_iterator_next_edge(&iter, &eid, &to)) {
       if (weights[eid] < min_weight[to]) {
         min_weight[to] = weights[eid];
         predecessor[to] = from;

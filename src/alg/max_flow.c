@@ -1,6 +1,6 @@
-#include "cgraph/alg.h"
+#include "cgraph/algorithm.h"
 #include "cgraph/graph.h"
-#include "cgraph/iter.h"
+#include "cgraph/iterator.h"
 #include "cgraph/struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
@@ -141,7 +141,7 @@ static void update(const Package *pkg, const FlowType step) {
     const CGraphId from = pkg->residual->edge_xor[eid] ^ to;
     pkg->flow.current[eid] += step;
 
-    if (pkg->flow.current[eid] >= pkg->flow.capacity[eid] * (1 - CGRAPH_EPSILON)) {
+    if (pkg->flow.current[eid] >= pkg->flow.capacity[eid] * (1 - CGRAPH_EPS)) {
       pkg->flow.current[eid] = 0;
       pkg->flow.reverse[eid] = !pkg->flow.reverse[eid];
       residual_reverse(pkg->residual, from, eid, to);

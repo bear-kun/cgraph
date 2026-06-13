@@ -1,5 +1,5 @@
-#ifndef PAIRING_HEAP_H
-#define PAIRING_HEAP_H
+#ifndef CGRAPH_PAIRING_HEAP_H
+#define CGRAPH_PAIRING_HEAP_H
 
 #include "cgraph/types.h"
 
@@ -30,4 +30,4 @@ static inline CGraphBool cgraph_pairing_heap_empty(const CGraphPairingHeap *heap
   return !heap->root;
 }
 
-#endif // PAIRING_HEAP_H
+#endif // CGRAPH_PAIRING_HEAP_H

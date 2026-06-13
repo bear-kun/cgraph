@@ -41,7 +41,7 @@ static void reserve_graph(CGraph *graph, const CGraphBool directed, const CGraph
 void cgraph_clear_edges(CGraph *graph) {
   graph->edge.count = 0;
   graph->edge.range = 0;
-  graph->edge.free = INVALID_ID;
+  graph->edge.free = CGRAPH_INV_ID;
 }
 
 void cgraph_clear(CGraph *graph) {
@@ -64,8 +64,8 @@ void cgraph_copy_vertices(CGraph *dst, const CGraph *src) {
 
   memcpy(dst->vert.array, src->vert.array, dst->vert.capacity * sizeof(CGraphId));
   memset(dst->vert.degree[OUT], 0, dst->vert.capacity * sizeof(CGraphInt));
-  memset(dst->edge.head[OUT], INVALID_ID, dst->vert.capacity * sizeof(CGraphId));
-  memset(dst->edge.head[IN], INVALID_ID, dst->vert.capacity * sizeof(CGraphId));
+  memset(dst->edge.head[OUT], CGRAPH_INV_ID, dst->vert.capacity * sizeof(CGraphId));
+  memset(dst->edge.head[IN], CGRAPH_INV_ID, dst->vert.capacity * sizeof(CGraphId));
 
   if (dst->edge.directed) {
     memset(dst->vert.degree[IN], 0, dst->vert.capacity * sizeof(CGraphInt));
@@ -152,8 +152,8 @@ static CGraphId vert_insert_new(CGraph *graph) {
     graph->vert.array[vid] = vid;
     graph->vert.degree[OUT][vid] = 0;
     graph->vert.degree[IN][vid] = 0;
-    graph->edge.head[OUT][vid] = INVALID_ID;
-    graph->edge.head[IN][vid] = INVALID_ID;
+    graph->edge.head[OUT][vid] = CGRAPH_INV_ID;
+    graph->edge.head[IN][vid] = CGRAPH_INV_ID;
   } else {
     vid = graph->vert.array[graph->vert.count];
   }
@@ -200,7 +200,7 @@ static void edge_insert(const CGraph *graph, const CGraphId vid, const CGraphId 
 static CGraphBool edge_unlink(const CGraph *graph, const CGraphId vid, const CGraphId eid,
                               const CGraphBool dir) {
   CGraphId *next = graph->edge.next[dir];
-  for (CGraphId *ptr = graph->edge.head[dir] + vid; *ptr != INVALID_ID; ptr = next + *ptr) {
+  for (CGraphId *ptr = graph->edge.head[dir] + vid; *ptr != CGRAPH_INV_ID; ptr = next + *ptr) {
     if (*ptr == eid) {
       *ptr = next[*ptr];
       graph->vert.degree[dir][vid]--;
@@ -226,22 +226,22 @@ void cgraph_add_vertices(CGraph *graph, const CGraphSize count) {
 
 void cgraph_delete_vertex(CGraph *graph, const CGraphId vid) {
   CGraphId eid = graph->edge.head[OUT][vid];
-  while (eid != INVALID_ID) {
+  while (eid != CGRAPH_INV_ID) {
     const CGraphId next = graph->edge.next[OUT][eid];
     edge_unlink(graph, graph->edge.xor_[eid] ^ vid, eid, IN);
     edge_delete(graph, eid);
     eid = next;
   }
-  graph->edge.head[OUT][vid] = INVALID_ID;
+  graph->edge.head[OUT][vid] = CGRAPH_INV_ID;
 
   eid = graph->edge.head[IN][vid];
-  while (eid != INVALID_ID) {
+  while (eid != CGRAPH_INV_ID) {
     const CGraphId next = graph->edge.next[IN][eid];
     edge_unlink(graph, graph->edge.xor_[eid] ^ vid, eid, OUT);
     edge_delete(graph, eid);
     eid = next;
   }
-  graph->edge.head[IN][vid] = INVALID_ID;
+  graph->edge.head[IN][vid] = CGRAPH_INV_ID;
 
   vert_unlink_and_delete(graph, vid);
 }
@@ -294,16 +294,16 @@ void cgraph_reverse_edge(const CGraph *const graph, const CGraphId eid) {
 
 CGraphId cgraph_find_edge(const CGraph *graph, const CGraphId from, const CGraphId to) {
   const CGraphId *next = graph->edge.next[OUT];
-  for (CGraphId eid = graph->edge.head[OUT][from]; eid != INVALID_ID; eid = next[eid]) {
+  for (CGraphId eid = graph->edge.head[OUT][from]; eid != CGRAPH_INV_ID; eid = next[eid]) {
     if (graph->edge.to[eid] == to) return eid;
   }
   if (!graph->edge.directed) {
     next = graph->edge.next[IN];
-    for (CGraphId eid = graph->edge.head[IN][from]; eid != INVALID_ID; eid = next[eid]) {
+    for (CGraphId eid = graph->edge.head[IN][from]; eid != CGRAPH_INV_ID; eid = next[eid]) {
       if ((graph->edge.xor_[eid] ^ from) == to) return eid;
     }
   }
-  return INVALID_ID;
+  return CGRAPH_INV_ID;
 }
 
 void cgraph_where_edge_from_to(const CGraph *graph, const CGraphId eid, CGraphId *from,
@@ -384,7 +384,7 @@ void cgraph_load_binary(CGraph *graph, const char *path) {
   if (read != header.edge.range) goto err2;
 
   memset(graph->vert.degree[OUT], 0, sizeof(CGraphInt) * header.vert.range);
-  memset(graph->edge.head[IN], INVALID_ID, sizeof(CGraphId) * header.vert.range);
+  memset(graph->edge.head[IN], CGRAPH_INV_ID, sizeof(CGraphId) * header.vert.range);
   if (header.edge.directed) {
     memset(graph->vert.degree[IN], 0, sizeof(CGraphInt) * header.vert.range);
   }
@@ -392,7 +392,7 @@ void cgraph_load_binary(CGraph *graph, const char *path) {
   const CGraphId *next = graph->edge.next[OUT];
   for (CGraphSize i = 0; i < header.vert.count; i++) {
     const CGraphId from = graph->vert.array[i];
-    for (CGraphId eid = graph->edge.head[OUT][from]; eid != INVALID_ID; eid = next[eid]) {
+    for (CGraphId eid = graph->edge.head[OUT][from]; eid != CGRAPH_INV_ID; eid = next[eid]) {
       const CGraphId to = graph->edge.to[eid];
       graph->vert.degree[OUT][from]++;
       edge_insert(graph, to, eid, IN);

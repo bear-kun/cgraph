@@ -84,19 +84,19 @@ cgraph_where_edge_from_to = cgraph.cgraph_where_edge_from_to
 cgraph_where_edge_from_to.argtypes = (c_graph_ptr, c_id_t, c_ptr(c_id_t), c_ptr(c_id_t))
 
 # Iterator
-cgraph_get_vertex_iter = cgraph.cgraph_get_vertex_iter
-cgraph_get_vertex_iter.restype = CGraphIter
-cgraph_get_vertex_iter.argtypes = (c_graph_ptr,)
-cgraph_get_edge_iter = cgraph.cgraph_get_edge_iter
-cgraph_get_edge_iter.restype = CGraphIter
-cgraph_get_edge_iter.argtypes = (c_graph_ptr, c_id_t, c_bool_t)
+cgraph_get_vertex_iterator = cgraph.cgraph_get_vertex_iterator
+cgraph_get_vertex_iterator.restype = CGraphIter
+cgraph_get_vertex_iterator.argtypes = (c_graph_ptr,)
+cgraph_get_edge_iterator = cgraph.cgraph_get_edge_iterator
+cgraph_get_edge_iterator.restype = CGraphIter
+cgraph_get_edge_iterator.argtypes = (c_graph_ptr, c_id_t, c_bool_t)
 
-cgraph_iter_next_vertex = cgraph.cgraph_iter_next_vertex
-cgraph_iter_next_vertex.restype = c_bool_t
-cgraph_iter_next_vertex.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t))
-cgraph_iter_next_edge = cgraph.cgraph_iter_next_edge
-cgraph_iter_next_edge.restype = c_bool_t
-cgraph_iter_next_edge.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t), c_ptr(c_id_t))
+cgraph_iterator_next_vertex = cgraph.cgraph_iterator_next_vertex
+cgraph_iterator_next_vertex.restype = c_bool_t
+cgraph_iterator_next_vertex.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t))
+cgraph_iterator_next_edge = cgraph.cgraph_iterator_next_edge
+cgraph_iterator_next_edge.restype = c_bool_t
+cgraph_iterator_next_edge.argtypes = (c_ptr(CGraphIter), c_ptr(c_id_t), c_ptr(c_id_t))
 
 # Algorithm
 cgraph_eulerian_path = cgraph.cgraph_eulerian_path
@@ -129,12 +129,12 @@ class GraphEdges:
         self.__vid = vid
 
     def __iter__(self):
-        self.__iter = cgraph_get_edge_iter(self.__cg_ptr, self.__vid, 0)
+        self.__iter = cgraph_get_edge_iterator(self.__cg_ptr, self.__vid, 0)
         return self
 
     def __next__(self):
         eid, to = c_id_t(), c_id_t()
-        if cgraph_iter_next_edge(c_ref(self.__iter), c_ref(eid), c_ref(to)):
+        if cgraph_iterator_next_edge(c_ref(self.__iter), c_ref(eid), c_ref(to)):
             return eid.value, to.value
         raise StopIteration
 
@@ -144,12 +144,12 @@ class GraphVertices:
         self.__cg_ptr = cgraph_ptr
 
     def __iter__(self):
-        self.__iter = cgraph_get_vertex_iter(self.__cg_ptr)
+        self.__iter = cgraph_get_vertex_iterator(self.__cg_ptr)
         return self
 
     def __next__(self):
         vid = c_id_t()
-        if cgraph_iter_next_vertex(c_ref(self.__iter), c_ref(vid)):
+        if cgraph_iterator_next_vertex(c_ref(self.__iter), c_ref(vid)):
             return vid.value, GraphEdges(self.__cg_ptr, vid)
         raise StopIteration
 
@@ -187,7 +187,7 @@ class Graph:
     def clear(self):
         cgraph_clear(self.__cg_ptr)
 
-    def add_vert(self):
+    def add_vertex(self):
         return cgraph_add_vertex(self.__cg_ptr)
 
     def add_vertices(self, count):
@@ -200,7 +200,7 @@ class Graph:
         endpoints = np.asarray(endpoints, dtype=np.dtype(c_id_t))
         return cgraph_add_edges(self.__cg_ptr, len(endpoints), _numpy2ctypes(endpoints))
 
-    def delete_vert(self, vid):
+    def delete_vertex(self, vid):
         cgraph_delete_vertex(self.__cg_ptr, vid)
 
     def delete_edge(self, eid):

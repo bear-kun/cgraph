@@ -1,5 +1,5 @@
-#ifndef DISJOINT_SET_H
-#define DISJOINT_SET_H
+#ifndef CGRAPH_DISJOINT_SET_H
+#define CGRAPH_DISJOINT_SET_H
 
 #include "cgraph/types.h"
 
@@ -30,4 +30,4 @@ static CGraphId cgraph_disjoint_find(CGraphDisjointSet *set, const CGraphId id) 
   return cls;
 }
 
-#endif // DISJOINT_SET_H
+#endif // CGRAPH_DISJOINT_SET_H

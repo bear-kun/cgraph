@@ -1,12 +1,10 @@
-#ifndef GRAPH_GRAPH_H
-#define GRAPH_GRAPH_H
+#ifndef CGRAPH_GRAPH_H
+#define CGRAPH_GRAPH_H
 
 #include "types.h"
 
 #ifdef __cplusplus
 extern "C" {
-
-
 #endif
 
 void cgraph_init(CGraph *graph, CGraphBool directed, CGraphSize vert_cap, CGraphSize edge_cap);
@@ -37,4 +35,4 @@ void cgraph_load_binary(CGraph *graph, const char *path); // Don't init graph !
 #ifdef __cplusplus
 }
 #endif
-#endif // GRAPH_GRAPH_H
+#endif // CGRAPH_GRAPH_H

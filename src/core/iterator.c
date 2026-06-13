@@ -1,4 +1,4 @@
-#include "cgraph/iter.h"
+#include "cgraph/iterator.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -56,7 +56,7 @@ CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, const CGraphId vi
     CGraphBool *dir = explorer->dir_current + vid;
 
   again:
-    if (*curr == INVALID_ID) {
+    if (*curr == CGRAPH_INV_ID) {
       if (*dir == explorer->dir_global) {
         *dir = !*dir;
         *curr = explorer->view->edge.head[*dir][vid];
@@ -70,19 +70,20 @@ CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, const CGraphId vi
     return true;
   }
 
-  if (*curr == INVALID_ID) return false;
+  if (*curr == CGRAPH_INV_ID) return false;
   *eid = *curr;
   *other = explorer->view->edge.xor_[*curr] ^ vid;
   *curr = explorer->view->edge.next[explorer->dir_global][*curr];
   return true;
 }
 
-CGraphIter cgraph_get_vertex_iter(const CGraph *graph) {
-  return (CGraphIter){graph, 0};
+CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph) {
+  return (CGraphIterator){graph, 0};
 }
 
-CGraphIter cgraph_get_edge_iter(const CGraph *graph, const CGraphId vid, const CGraphBool dir) {
-  return (CGraphIter){
+CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, const CGraphId vid,
+                                        const CGraphBool dir) {
+  return (CGraphIterator){
       .view = graph,
       .vert = vid,
       .edge = graph->edge.head[dir][vid],
@@ -92,15 +93,15 @@ CGraphIter cgraph_get_edge_iter(const CGraph *graph, const CGraphId vid, const C
   };
 }
 
-CGraphBool cgraph_iter_next_vertex(CGraphIter *iter, CGraphId *vid) {
+CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid) {
   if (iter->vert == iter->view->vert.count) return false;
   *vid = iter->view->vert.array[iter->vert++];
   return true;
 }
 
-CGraphBool cgraph_iter_next_edge(CGraphIter *iter, CGraphId *eid, CGraphId *other) {
+CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other) {
 again:
-  if (iter->edge == INVALID_ID) {
+  if (iter->edge == CGRAPH_INV_ID) {
     if (iter->undirected && iter->dir_current == iter->dir_global) {
       iter->dir_current = !iter->dir_current;
       iter->edge = iter->view->edge.head[iter->dir_current][iter->vert];
@@ -120,7 +121,7 @@ void cgraph_traverse_edges(const CGraph *graph, void *data,
   const CGraphId *head = graph->edge.head[OUT], *next = graph->edge.next[OUT];
   for (CGraphId v = 0; v < graph->vert.count; v++) {
     const CGraphId from = graph->vert.array[v];
-    for (CGraphId eid = head[from]; eid != INVALID_ID; eid = next[eid]) {
+    for (CGraphId eid = head[from]; eid != CGRAPH_INV_ID; eid = next[eid]) {
       callback(from, eid, graph->edge.xor_[eid] ^ from, data);
     }
   }

@@ -1,13 +1,10 @@
-#ifndef GRAPH_ALG_H
-#define GRAPH_ALG_H
+#ifndef CGRAPH_ALGORITHM_H
+#define CGRAPH_ALGORITHM_H
 
 #include "types.h"
 
 #ifdef __cplusplus
 extern "C" {
-
-
-
 #endif
 
 void cgraph_critical_path(const CGraph *aoa, const TimeType duration[], CGraphId successor[],
@@ -64,4 +61,4 @@ void cgraph_shortest_floyd_warshall(WeightType **weight, CGraphSize vert_count, 
 #ifdef __cplusplus
 }
 #endif
-#endif // GRAPH_ALG_H
+#endif // CGRAPH_ALGORITHM_H

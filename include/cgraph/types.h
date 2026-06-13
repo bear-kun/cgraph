@@ -1,14 +1,14 @@
-#ifndef GRAPH_VERTEX_EDGE_H
-#define GRAPH_VERTEX_EDGE_H
+#ifndef CGRAPH_TYPES_H
+#define CGRAPH_TYPES_H
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <float.h>
 
 // set CGRAPH_EPSILON = 0 if WeightType is Integer
-#define INVALID_ID (-1)
+#define CGRAPH_INV_ID (-1)
 #define CGRAPH_INF FLT_MAX
-#define CGRAPH_EPSILON 1e-6f
+#define CGRAPH_EPS 1e-6f
 #define CGRAPH_OUT 0
 #define CGRAPH_IN 1
 
@@ -51,6 +51,6 @@ typedef struct {
   CGraphBool dir_current;
   CGraphBool dir_global;
   CGraphBool undirected;
-} CGraphIter;
+} CGraphIterator;
 
-#endif // GRAPH_VERTEX_EDGE_H
+#endif // CGRAPH_TYPES_H

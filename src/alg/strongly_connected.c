@@ -1,6 +1,6 @@
-#include "cgraph/alg.h"
+#include "cgraph/algorithm.h"
 #include "cgraph/graph.h"
-#include "cgraph/iter.h"
+#include "cgraph/iterator.h"
 #include "cgraph/struct/stack.h"
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +39,7 @@ void cgraph_strongly_connected(const CGraph *graph, CGraphId components[]) {
       .components = components,
       .counter = 0,
   };
-  memset(components, INVALID_ID, graph->vert.range * sizeof(CGraphId));
+  memset(components, CGRAPH_INV_ID, graph->vert.range * sizeof(CGraphId));
 
   CGraphId from;
   while (cgraph_explorer_next_vertex(pkg.explorer, &from)) {

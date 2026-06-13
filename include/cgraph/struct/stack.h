@@ -1,5 +1,5 @@
-#ifndef GRAPH_STACK_H
-#define GRAPH_STACK_H
+#ifndef CGRAPH_STACK_H
+#define CGRAPH_STACK_H
 
 #include "cgraph/types.h"
 
@@ -23,4 +23,4 @@ static inline CGraphBool cgraph_stack_empty(const CGraphStack *const stack) {
   return stack->size == 0;
 }
 
-#endif // GRAPH_STACK_H
+#endif // CGRAPH_STACK_H

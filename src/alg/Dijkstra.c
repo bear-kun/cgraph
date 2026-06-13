@@ -1,5 +1,5 @@
-#include "cgraph/alg.h"
-#include "cgraph/iter.h"
+#include "cgraph/algorithm.h"
+#include "cgraph/iterator.h"
 #include "cgraph/struct/pairing_heap.h"
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +10,7 @@ void cgraph_shortest_dijkstra(const CGraph *const graph, const WeightType weight
   CGraphBool *visited = calloc(graph->vert.range, sizeof(CGraphBool));
   WeightType *distance = malloc(graph->vert.range * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraph_new_pairing_heap(graph->vert.count, distance);
-  memset(predecessor, INVALID_ID, graph->vert.range * sizeof(CGraphId));
+  memset(predecessor, CGRAPH_INV_ID, graph->vert.range * sizeof(CGraphId));
   for (CGraphId i = 0; i < graph->vert.range; i++) distance[i] = CGRAPH_INF;
 
   visited[source] = true;
@@ -21,8 +21,8 @@ void cgraph_shortest_dijkstra(const CGraph *const graph, const WeightType weight
     if (from == target) break;
 
     CGraphId eid, to;
-    CGraphIter iter = cgraph_get_edge_iter(graph, from, CGRAPH_OUT);
-    while (cgraph_iter_next_edge(&iter, &eid, &to)) {
+    CGraphIterator iter = cgraph_get_edge_iterator(graph, from, CGRAPH_OUT);
+    while (cgraph_iterator_next_edge(&iter, &eid, &to)) {
       if (distance[from] + weights[eid] < distance[to]) {
         distance[to] = distance[from] + weights[eid];
         predecessor[to] = from;

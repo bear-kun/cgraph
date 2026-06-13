@@ -1,5 +1,5 @@
-#ifndef GRAPH_LINKED_PATH_H
-#define GRAPH_LINKED_PATH_H
+#ifndef CGRAPH_LINKED_PATH_H
+#define CGRAPH_LINKED_PATH_H
 
 #include "cgraph/types.h"
 
@@ -13,4 +13,4 @@ typedef struct {
 void cgraph_delete_vector(const CGraphVector *vector);
 void cgraph_vector_push(CGraphVector *vector, CGraphId item);
 
-#endif // GRAPH_LINKED_PATH_H
+#endif // CGRAPH_LINKED_PATH_H

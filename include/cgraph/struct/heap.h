@@ -1,5 +1,5 @@
-#ifndef HEAP_H
-#define HEAP_H
+#ifndef CGRAPH_HEAP_H
+#define CGRAPH_HEAP_H
 
 #include "cgraph/types.h"
 
@@ -23,4 +23,4 @@ static void cgraph_heap_prebuild(CGraphHeap *heap, const CGraphId id) {
   heap->elems[++heap->size] = id;
 }
 
-#endif // HEAP_H
+#endif // CGRAPH_HEAP_H

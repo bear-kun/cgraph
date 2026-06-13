@@ -1,5 +1,5 @@
-#include "cgraph/alg.h"
-#include "cgraph/iter.h"
+#include "cgraph/algorithm.h"
+#include "cgraph/iterator.h"
 #include "cgraph/struct/vector.h"
 #include <stdlib.h>
 

@@ -1,5 +1,5 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef CGRAPH_QUEUE_H
+#define CGRAPH_QUEUE_H
 
 #include "cgraph/types.h"
 
@@ -33,4 +33,4 @@ static CGraphId cgraph_queue_pop(CGraphQueue *queue) {
   return item;
 }
 
-#endif // QUEUE_H
+#endif // CGRAPH_QUEUE_H

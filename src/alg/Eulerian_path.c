@@ -1,5 +1,5 @@
-#include "cgraph/alg.h"
-#include "cgraph/iter.h"
+#include "cgraph/algorithm.h"
+#include "cgraph/iterator.h"
 #include "cgraph/struct/stack.h"
 #include <stdlib.h>
 
@@ -33,7 +33,7 @@ static CGraphBool get_target_edge(Package *pkg, const CGraphId from) {
 
 static inline CGraphBool insert(Package *pkg, const CGraphId from) {
   *--pkg->path = from;
-  if (pkg->target == INVALID_ID) {
+  if (pkg->target == CGRAPH_INV_ID) {
     pkg->target = from;
     return true;
   }
@@ -76,7 +76,7 @@ CGraphBool cgraph_eulerian_path(const CGraph *graph, CGraphId path[], const CGra
       .target = dst
   };
 
-  path[0] = INVALID_ID;
+  path[0] = CGRAPH_INV_ID;
   // const CGraphBool res = EulerianPath_recursive(&pkg, src);
   CGraphStack *stack = cgraph_new_stack(graph->edge.count);
   const CGraphBool res = eulerian_path_stack(&pkg, stack, src);
@@ -84,7 +84,7 @@ CGraphBool cgraph_eulerian_path(const CGraph *graph, CGraphId path[], const CGra
   free(pkg.visited);
   cgraph_delete_stack(stack);
   cgraph_delete_explorer(pkg.explorer);
-  return res && path[0] != INVALID_ID;
+  return res && path[0] != CGRAPH_INV_ID;
 }
 
 CGraphBool cgraph_eulerian_circuit(const CGraph *graph, CGraphId path[], const CGraphId src) {

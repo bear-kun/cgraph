@@ -5,8 +5,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-
-
 #endif
 
 // explorer
@@ -23,12 +21,12 @@ CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, CGraphId vid, CGr
                                      CGraphId *other);
 
 // iter
-CGraphIter cgraph_get_vertex_iter(const CGraph *graph);
-CGraphIter cgraph_get_edge_iter(const CGraph *graph, CGraphId vid, CGraphBool dir);
+CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph);
+CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, CGraphId vid, CGraphBool dir);
 
-CGraphBool cgraph_iter_next_vertex(CGraphIter *iter, CGraphId *vid);
+CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid);
 // reverse of the insertion order
-CGraphBool cgraph_iter_next_edge(CGraphIter *iter, CGraphId *eid, CGraphId *other);
+CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other);
 
 void cgraph_traverse_edges(const CGraph *graph, void *data,
                            void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *data));

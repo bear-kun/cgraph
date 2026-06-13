@@ -1,4 +1,4 @@
-#include "cgraph/alg.h"
+#include "cgraph/algorithm.h"
 
 /*
  * Floyd-Warshall算法
