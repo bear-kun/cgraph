@@ -123,7 +123,7 @@ static CGraphBool vert_valid(const CGraph *graph, const CGraphId vid) {
 
 static void vert_fix_free(const CGraph *graph) {
   for (CGraphId i = (CGraphId)graph->vert.count, j = i; i < graph->vert.range; i++) {
-    while (graph->vert.array[j] >= graph->edge.range) j++;
+    while (graph->vert.array[j] >= graph->vert.range) j++;
 
     const CGraphId vid = graph->vert.array[j++];
     graph->vert.array[i] = vid;
