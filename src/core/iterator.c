@@ -36,9 +36,9 @@ void cgraph_explorer_reset_all_edges(CGraphExplorer *explorer, const CGraphBool 
   explorer->dir_global = dir;
   memcpy(explorer->edge, explorer->view->edge.head[dir],
          explorer->view->vert.range * sizeof(CGraphId));
-  if (explorer->dir_current)
-    memset(explorer->dir_current, dir,
-           explorer->view->vert.range * sizeof(CGraphBool));
+  if (explorer->dir_current) {
+    memset(explorer->dir_current, dir, explorer->view->vert.range * sizeof(CGraphBool));
+  }
 }
 
 CGraphBool cgraph_explorer_next_vertex(CGraphExplorer *explorer, CGraphId *vid) {

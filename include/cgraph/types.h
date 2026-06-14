@@ -24,7 +24,7 @@ typedef WeightType FlowType; // flow
 typedef struct {
   struct {
     CGraphSize capacity, count, range;
-    CGraphId *array;
+    CGraphId *indices, *array;
     CGraphInt *degree[2];
   } vert;
 
