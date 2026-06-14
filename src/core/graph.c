@@ -87,6 +87,7 @@ static CGraphSize resize_new_capacity(const CGraphSize capacity) {
 static void vert_resize(CGraph *graph, const CGraphSize capacity) {
   const CGraphSize new_cap = resize_new_capacity(capacity);
 
+  graph->vert.indices = safe_realloc(graph->vert.indices, new_cap * sizeof(CGraphId));
   graph->vert.array = safe_realloc(graph->vert.array, new_cap * sizeof(CGraphId));
   graph->vert.degree[OUT] = safe_realloc(graph->vert.degree[OUT], new_cap * sizeof(CGraphInt));
   graph->vert.degree[IN] = graph->edge.directed
