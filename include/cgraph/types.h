@@ -14,7 +14,7 @@
 
 typedef bool CGraphBool;
 typedef int32_t CGraphInt;
-typedef int32_t CGraphId;
+typedef CGraphInt CGraphId;
 typedef uint32_t CGraphSize;
 typedef float WeightType;
 typedef WeightType TimeType; // aoa

@@ -18,7 +18,7 @@ class CGraph(ctypes.Structure):
     class _Vertices(ctypes.Structure):
         _fields_ = [
             ('capacity', c_size_t), ('count', c_size_t), ('range', c_size_t),
-            ('array', c_ptr(c_id_t)),
+            ('indices', c_ptr(c_id_t)), ('array', c_ptr(c_id_t)),
             ('degree', c_ptr(c_int_t) * 2),
             ('resize', c_resize_cb_t)
         ]
@@ -52,10 +52,12 @@ c_graph_ptr = c_ptr(CGraph)
 
 # Core
 cgraph_init = cgraph.cgraph_init
+cgraph_init.restype = c_bool_t
 cgraph_init.argtypes = (c_graph_ptr, c_bool_t, c_size_t, c_size_t)
 cgraph_release = cgraph.cgraph_release
 cgraph_release.argtypes = (c_graph_ptr,)
 cgraph_copy = cgraph.cgraph_copy
+cgraph_copy.restype = c_bool_t
 cgraph_copy.argtypes = (c_graph_ptr, c_graph_ptr)
 cgraph_clear = cgraph.cgraph_clear
 cgraph_clear.argtypes = (c_graph_ptr,)
@@ -64,6 +66,7 @@ cgraph_add_vertex = cgraph.cgraph_add_vertex
 cgraph_add_vertex.restype = c_id_t
 cgraph_add_vertex.argtypes = (c_graph_ptr,)
 cgraph_add_vertices = cgraph.cgraph_add_vertices
+cgraph_add_vertices.restype = c_bool_t
 cgraph_add_vertices.argtypes = (c_graph_ptr, c_size_t)
 cgraph_delete_vertex = cgraph.cgraph_delete_vertex
 cgraph_delete_vertex.argtypes = (c_graph_ptr, c_id_t)
@@ -72,6 +75,7 @@ cgraph_add_edge = cgraph.cgraph_add_edge
 cgraph_add_edge.restype = c_id_t
 cgraph_add_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
 cgraph_add_edges = cgraph.cgraph_add_edges
+cgraph_add_edges.restype = c_bool_t
 cgraph_add_edges.argtypes = (c_graph_ptr, c_size_t, c_ptr(c_id_t * 2))
 cgraph_delete_edge = cgraph.cgraph_delete_edge
 cgraph_delete_edge.argtypes = (c_graph_ptr, c_id_t)
