@@ -25,7 +25,7 @@ static CGraphBool memory_alloc(MemoryAllocator *alloc, CGraphId **ptr, const siz
 }
 
 static CGraphBool memory_realloc(MemoryAllocator *alloc, CGraphId **ptr, const size_t new_count) {
-  void *mem = realloc(ptr, new_count * sizeof(CGraphInt));
+  void *mem = realloc(*ptr, new_count * sizeof(CGraphInt));
   if (!mem) return false;
   alloc->stack[alloc->size++] = *ptr = mem;
   return true;
