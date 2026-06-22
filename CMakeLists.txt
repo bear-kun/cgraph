@@ -3,8 +3,8 @@ project(cgraph C)
 
 set(CMAKE_C_STANDARD 11)
 
-file(GLOB CORE_SOURCES "src/core/*.c")
-file(GLOB_RECURSE ALG_SOURCES "src/alg/*.c" "src/struct/*.c")
+file(GLOB CORE_SOURCES "src/graph.c")
+file(GLOB_RECURSE ALG_SOURCES "src/alg/*.c" "src/struct.c")
 
 if (CGRAPH_ONLY_CORE)
     add_library(cgraph_core STATIC ${CORE_SOURCES})

@@ -1,5 +1,4 @@
 #include "cgraph/algorithm.h"
-#include "cgraph/iterator.h"
 #include "cgraph/struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +51,7 @@ CGraphBool cgraph_shortest_bellman_ford(const CGraph *graph, const WeightType we
   CGraphSize *depth = calloc(graph->vert.range, sizeof(CGraphSize));
   WeightType *distance = malloc(graph->vert.range * sizeof(WeightType));
   memset(predecessor, CGRAPH_INV_ID, graph->vert.range * sizeof(CGraphId));
-  for (CGraphId i = 0; i < graph->vert.range; i++) distance[i] = CGRAPH_INF;
+  for (CGraphSize i = 0; i < graph->vert.range; i++) distance[i] = CGRAPH_INF;
 
   CGraphBool success = true;
   depth[source] = 1;

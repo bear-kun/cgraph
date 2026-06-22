@@ -1,5 +1,4 @@
 #include "cgraph/algorithm.h"
-#include "cgraph/iterator.h"
 #include "cgraph/struct/queue.h"
 #include <stdlib.h>
 #include <string.h>
@@ -63,7 +62,7 @@ static void init(Package *pkg, const CGraph *graph) {
   memcpy(pkg->indegree, graph->vert.degree[CGRAPH_IN], vert_range * sizeof(CGraphInt));
   memset(pkg->early_start, 0, vert_range * sizeof(TimeType));
   memset(pkg->successor, CGRAPH_INV_ID, vert_range * sizeof(CGraphId));
-  for (CGraphId i = 0; i < vert_range; i++) pkg->late_start[i] = CGRAPH_INF;
+  for (CGraphSize i = 0; i < vert_range; i++) pkg->late_start[i] = CGRAPH_INF;
   indegree_init_queue(graph, pkg->indegree, pkg->queue);
 }
 

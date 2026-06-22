@@ -1,5 +1,4 @@
 #include "cgraph/algorithm.h"
-#include "cgraph/iterator.h"
 #include "cgraph/struct/pairing_heap.h"
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +10,7 @@ void cgraph_shortest_dijkstra(const CGraph *const graph, const WeightType weight
   WeightType *distance = malloc(graph->vert.range * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraph_new_pairing_heap(graph->vert.count, distance);
   memset(predecessor, CGRAPH_INV_ID, graph->vert.range * sizeof(CGraphId));
-  for (CGraphId i = 0; i < graph->vert.range; i++) distance[i] = CGRAPH_INF;
+  for (CGraphSize i = 0; i < graph->vert.range; i++) distance[i] = CGRAPH_INF;
 
   visited[source] = true;
   distance[source] = 0;

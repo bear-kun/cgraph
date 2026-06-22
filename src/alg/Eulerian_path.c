@@ -1,5 +1,4 @@
 #include "cgraph/algorithm.h"
-#include "cgraph/iterator.h"
 #include "cgraph/struct/stack.h"
 #include <stdlib.h>
 

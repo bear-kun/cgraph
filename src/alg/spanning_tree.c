@@ -1,6 +1,5 @@
 #include "cgraph/algorithm.h"
 #include "cgraph/graph.h"
-#include "cgraph/iterator.h"
 #include "cgraph/struct/pairing_heap.h"
 #include "cgraph/struct/disjoint_set.h"
 #include "cgraph/struct/heap.h"
@@ -11,7 +10,7 @@ void cgraph_spanning_tree_prim(const CGraph *graph, const WeightType weights[],
   CGraphBool *visited = calloc(graph->vert.range, sizeof(CGraphBool));
   WeightType *min_weight = malloc(graph->vert.range * sizeof(WeightType));
   CGraphPairingHeap *heap = cgraph_new_pairing_heap(graph->vert.count, min_weight);
-  for (CGraphId i = 0; i < graph->vert.range; i++) min_weight[i] = CGRAPH_INF;
+  for (CGraphSize i = 0; i < graph->vert.range; i++) min_weight[i] = CGRAPH_INF;
 
   visited[root] = true;
   predecessor[root] = CGRAPH_INV_ID;

@@ -1,7 +1,7 @@
 #ifndef CGRAPH_DISJOINT_SET_H
 #define CGRAPH_DISJOINT_SET_H
 
-#include "cgraph/types.h"
+#include "cgraph/graph.h"
 
 typedef CGraphId CGraphDisjointSet;
 

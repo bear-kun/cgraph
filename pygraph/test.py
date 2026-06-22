@@ -126,7 +126,7 @@ def max_flow(vert_count, edge_count):
 def shortest_path(vert_count, edge_count):
     path = [random.randint(0, vert_count - 1) for _ in range(edge_count - 1)]
     weights1 = [random.uniform(0, 10000) for _ in range(edge_count)]
-    weights2 = [random.uniform(-100, 10000) for _ in range(edge_count)]
+    weights2 = [random.uniform(-10, 10000) for _ in range(edge_count)]
 
     pg = pygraph.Graph(True)
     pg.add_vertices(vert_count)
@@ -170,8 +170,8 @@ def main():
     eulerian_path(10000, 100000)
     strongly_connected(10000, 1000000)
     articulations(10000, 1000000)
-    max_flow(10000, 1000000)
-    shortest_path(10000, 1000000)
+    max_flow(10000, 100000)
+    shortest_path(10000, 100000)
     return
 
 

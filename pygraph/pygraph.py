@@ -19,8 +19,7 @@ class CGraph(ctypes.Structure):
         _fields_ = [
             ('capacity', c_size_t), ('count', c_size_t), ('range', c_size_t),
             ('indices', c_ptr(c_id_t)), ('array', c_ptr(c_id_t)),
-            ('degree', c_ptr(c_int_t) * 2),
-            ('resize', c_resize_cb_t)
+            ('degree', c_ptr(c_int_t) * 2)
         ]
 
     class _Edges(ctypes.Structure):
@@ -28,8 +27,7 @@ class CGraph(ctypes.Structure):
             ('directed', c_bool_t),
             ('capacity', c_size_t), ('count', c_size_t), ('range', c_size_t),
             ('free', c_id_t), ('head', c_ptr(c_id_t) * 2), ('next', c_ptr(c_id_t) * 2),
-            ('xor', c_ptr(c_id_t)), ('to', c_ptr(c_id_t)),
-            ('resize', c_resize_cb_t)
+            ('xor', c_ptr(c_id_t)), ('to', c_ptr(c_id_t))
         ]
 
     _fields_ = [
@@ -42,9 +40,9 @@ class CGraphIter(ctypes.Structure):
         ('view', c_ptr(CGraph)),
         ('curr', c_id_t),
         ('vert', c_id_t),
-        ('dir_current', c_bool_t),
+        ('undirected', c_bool_t),
         ('dir_global', c_bool_t),
-        ('undirected', c_bool_t)
+        ('dir_current', c_bool_t)
     ]
 
 

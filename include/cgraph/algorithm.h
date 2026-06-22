@@ -1,7 +1,7 @@
 #ifndef CGRAPH_ALGORITHM_H
 #define CGRAPH_ALGORITHM_H
 
-#include "types.h"
+#include "graph.h"
 
 #ifdef __cplusplus
 extern "C" {

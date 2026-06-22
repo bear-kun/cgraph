@@ -1,7 +1,7 @@
 #ifndef CGRAPH_LINKED_PATH_H
 #define CGRAPH_LINKED_PATH_H
 
-#include "cgraph/types.h"
+#include "cgraph/graph.h"
 
 typedef struct {
   CGraphSize capacity, size;
