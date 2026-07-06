@@ -1,11 +1,13 @@
 #ifndef CGRAPH_GRAPH_H
 #define CGRAPH_GRAPH_H
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <float.h>
 
 // set CGRAPH_EPSILON = 0 if WeightType is Integer
+
 #define CGRAPH_INV_ID (-1)
 #define CGRAPH_INF FLT_MAX
 #define CGRAPH_EPS 1e-6f
@@ -14,13 +16,16 @@
 
 typedef bool CGraphBool;
 typedef int32_t CGraphInt;
+typedef uint32_t CGraphUint;
 typedef CGraphInt CGraphId;
-typedef uint32_t CGraphSize;
+typedef CGraphUint CGraphSize;
+
 typedef float WeightType;
 typedef WeightType TimeType; // aoa
 typedef WeightType FlowType; // flow
 
 // O(5 * V + 4 * E)
+
 typedef struct {
   struct {
     CGraphSize capacity, count, range;
@@ -81,7 +86,9 @@ CGraphId cgraph_find_edge(const CGraph *graph, CGraphId from, CGraphId to);
 void cgraph_where_edge_from_to(const CGraph *graph, CGraphId eid, CGraphId *from, CGraphId *to);
 
 CGraphBool cgraph_save_binary(CGraph *graph, const char *path);
+CGraphBool cgraph_save_binary_s(CGraph *graph, FILE *stream);
 CGraphBool cgraph_load_binary(CGraph *graph, const char *path); // Don't init graph !
+CGraphBool cgraph_load_binary_s(CGraph *graph, FILE *stream); // Don't init graph !
 
 // ----- iterator -----
 CGraphExplorer *cgraph_new_explorer(const CGraph *graph, CGraphBool dir);
