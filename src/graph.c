@@ -33,8 +33,11 @@ static CGraphBool memory_realloc(MemoryAllocator *alloc, CGraphId **ptr, const s
 
 static void memory_free(const MemoryAllocator *alloc) {
   for (int i = 0; i < alloc->size; i++) {
-    if (alloc->old_count == 0) free(alloc->stack[i]);
-    else realloc(alloc->stack[i], alloc->old_count);
+    if (alloc->old_count == 0) {
+      free(alloc->stack[i]);
+    } else {
+      realloc(alloc->stack[i], alloc->old_count);
+    }
   }
 }
 
@@ -601,6 +604,7 @@ void cgraph_traverse_edges(const CGraph *graph, void *data,
 #include "endian.h"
 
 #define BATCH_SIZE (128 * 1024)
+#define CGRAPH_MAGIC 0x06790608
 
 typedef struct {
   // 64 bytes
@@ -621,7 +625,6 @@ typedef struct {
   uint8_t reserved[]; // 64 bytes
 } CGraphFileHeader;
 
-static const uint32_t MAGIC = 0x06790608;
 
 static uint8_t *write_buffer_16bits(uint8_t *buffer, const uint16_t data) {
   const uint16_t data_net = hton16(data);
@@ -657,7 +660,7 @@ static uint8_t *write_buffer_cgraph_int(uint8_t *buffer, const CGraphInt data) {
   }
 }
 
-static void write_header(FILE *stream, const CGraphFileHeader *header) {
+static CGraphBool write_header(FILE *stream, const CGraphFileHeader *header) {
   uint8_t buffer[128] = {0};
   uint8_t *ptr = buffer;
   ptr = write_buffer_32bits(ptr, header->magic);
@@ -671,27 +674,32 @@ static void write_header(FILE *stream, const CGraphFileHeader *header) {
   ptr = write_buffer_64bits(ptr, header->edge_count);
   ptr = write_buffer_64bits(ptr, header->edge_range);
   write_buffer_64bits(ptr, header->edge_free);
-  fwrite(buffer, 128, 1, stream);
+  return fwrite(buffer, 128, 1, stream);
 }
 
-static void write_array(FILE *stream, const CGraphInt *array, const CGraphSize len,
-                        uint8_t *buffer) {
+static CGraphBool write_array(FILE *stream, const CGraphInt *array, const CGraphSize len,
+                              uint8_t *buffer) {
   const CGraphSize rows = len / BATCH_SIZE;
   const CGraphInt *data_ptr = array;
   uint8_t *buff_ptr = buffer;
+
   for (CGraphSize r = 0; r < rows; r++) {
     for (CGraphSize c = 0; c < BATCH_SIZE; c++) {
       buff_ptr = write_buffer_cgraph_int(buff_ptr, *data_ptr++);
     }
-    fwrite(buffer, sizeof(CGraphInt), BATCH_SIZE, stream);
+
+    const size_t write = fwrite(buffer, sizeof(CGraphInt), BATCH_SIZE, stream);
+    if (write != BATCH_SIZE) return false;
     buff_ptr = buffer;
   }
 
-  const CGraphInt *end = array + len;
-  while (data_ptr < end) {
+  const size_t remaining = len - rows * BATCH_SIZE;
+  if (remaining == 0) return true;
+
+  for (size_t i = 0; i < remaining; i++) {
     buff_ptr = write_buffer_cgraph_int(buff_ptr, *data_ptr++);
   }
-  fwrite(buffer, sizeof(CGraphInt), len - rows * BATCH_SIZE, stream);
+  return remaining == fwrite(buffer, sizeof(CGraphInt), remaining, stream);
 }
 
 CGraphBool cgraph_save_binary_s(CGraph *graph, FILE *stream) {
@@ -699,8 +707,8 @@ CGraphBool cgraph_save_binary_s(CGraph *graph, FILE *stream) {
   edge_fix_free(graph);
 
   const CGraphFileHeader header = {
-      .magic = MAGIC,
-      .version = 0,
+      .magic = CGRAPH_MAGIC,
+      .version = CGRAPH_VERSION,
       .header_size = 64,
       .data_offset = 128,
       .int_bytes = sizeof(CGraphInt),
@@ -736,31 +744,88 @@ CGraphBool cgraph_save_binary(CGraph *graph, const char *path) {
   return ok;
 }
 
-CGraphBool cgraph_load_binary_s(CGraph *graph, FILE *stream) {
-  CGraphFileHeader header;
-  size_t read = fread(&header, sizeof(CGraphFileHeader), 1, stream);
-  if (read != 1) return false;
+static uint8_t *read_buffer_16bits(uint8_t *buffer, uint16_t *data) {
+  memcpy(data, buffer, 2);
+  *data = ntoh16(*data);
+  return buffer + 2;
+}
 
-  if (!graph_reserve(graph, header.flags, header.vert_range, header.edge_range)) return false;
-  graph->vert.count = header.vert_count;
-  graph->vert.range = header.vert_range;
-  graph->edge.count = header.edge_count;
-  graph->edge.range = header.edge_range;
-  graph->edge.free = (CGraphId)header.edge_free;
+static uint8_t *read_buffer_32bits(uint8_t *buffer, uint32_t *data) {
+  memcpy(data, buffer, 4);
+  *data = ntoh32(*data);
+  return buffer + 4;
+}
 
-  read = fread(graph->vert.array, sizeof(CGraphId), graph->vert.range, stream);
-  if (read != graph->vert.range) goto fail;
+static uint8_t *read_buffer_64bits(uint8_t *buffer, uint64_t *data) {
+  memcpy(data, buffer, 8);
+  *data = ntoh64(*data);
+  return buffer + 8;
+}
 
-  read = fread(graph->edge.head[OUT], sizeof(CGraphId), graph->vert.range, stream);
-  if (read != graph->vert.range) goto fail;
+static uint8_t *read_buffer_cgraph_int(uint8_t *buffer, CGraphInt *data) {
+  switch (sizeof(CGraphInt)) {
+  case 1:
+    *data = *buffer;
+    return buffer + 1;
+  case 2:
+    return read_buffer_16bits(buffer, (uint16_t *)data);
+  case 4:
+    return read_buffer_32bits(buffer, (uint32_t *)data);
+  case 8:
+    return read_buffer_64bits(buffer, (uint64_t *)data);
+  default:
+    return buffer;
+  }
+}
 
-  read = fread(graph->edge.next[OUT], sizeof(CGraphId), graph->edge.range, stream);
-  if (read != graph->edge.range) goto fail;
+static CGraphBool read_header(FILE *stream, CGraphFileHeader *header) {
+  uint8_t buffer[128];
+  if (!fread(buffer, sizeof(CGraphFileHeader), 1, stream)) return false;
 
-  read = fread(graph->edge.to, sizeof(CGraphId), graph->edge.range, stream);
-  if (read != graph->edge.range) goto fail;
+  uint8_t *ptr = buffer;
+  ptr = read_buffer_32bits(ptr, &header->magic);
+  ptr = read_buffer_32bits(ptr, &header->version);
+  ptr = read_buffer_32bits(ptr, &header->header_size);
+  ptr = read_buffer_32bits(ptr, &header->data_offset);
+  ptr = read_buffer_32bits(ptr, &header->int_bytes);
+  ptr = read_buffer_32bits(ptr, &header->flags);
+  ptr = read_buffer_64bits(ptr, &header->vert_count);
+  ptr = read_buffer_64bits(ptr, &header->vert_range);
+  ptr = read_buffer_64bits(ptr, &header->edge_count);
+  ptr = read_buffer_64bits(ptr, &header->edge_range);
+  read_buffer_64bits(ptr, &header->edge_free);
+  return true;
+}
 
+static CGraphBool read_array(FILE *stream, CGraphInt *array, const CGraphSize len,
+                             uint8_t *buffer) {
+  const CGraphSize rows = len / BATCH_SIZE;
+  CGraphInt *data_ptr = array;
+  uint8_t *buff_ptr = buffer;
 
+  for (CGraphSize r = 0; r < rows; r++) {
+    const size_t read = fread(buff_ptr, sizeof(CGraphInt), BATCH_SIZE, stream);
+    if (read < BATCH_SIZE) return false;
+
+    for (CGraphSize c = 0; c < BATCH_SIZE; c++) {
+      buff_ptr = read_buffer_cgraph_int(buff_ptr, data_ptr++);
+    }
+    buff_ptr = buffer;
+  }
+
+  const size_t remaining = len - rows * BATCH_SIZE;
+  if (remaining == 0) return true;
+
+  const size_t read = fread(buff_ptr, sizeof(CGraphInt), remaining, stream);
+  if (read < remaining) return false;
+
+  for (size_t i = 0; i < remaining; i++) {
+    buff_ptr = read_buffer_cgraph_int(buff_ptr, data_ptr++);
+  }
+  return true;
+}
+
+static void rebuild_graph(const CGraph *graph) {
   memset(graph->edge.head[IN], CGRAPH_INV_ID, sizeof(CGraphId) * graph->vert.range);
   memset(graph->vert.degree[OUT], 0, sizeof(CGraphInt) * graph->vert.range);
   if (graph->edge.directed) {
@@ -784,10 +849,38 @@ CGraphBool cgraph_load_binary_s(CGraph *graph, FILE *stream) {
   for (CGraphId f = graph->edge.free; f != CGRAPH_INV_ID; f = graph->edge.FREE_NEXT[f]) {
     graph->edge.STATE[f] = DELETED;
   }
+}
 
+CGraphBool cgraph_load_binary_s(CGraph *graph, FILE *stream) {
+  CGraphFileHeader header;
+  if (!read_header(stream, &header)) return false;
+
+  if (header.magic != CGRAPH_MAGIC) return false;
+  if (header.version != CGRAPH_VERSION) return false;
+  if (header.int_bytes != sizeof(CGraphInt)) return false;
+  if (fseek(stream, (long)header.data_offset, SEEK_SET) != 0) return false;
+
+  if (!graph_reserve(graph, header.flags, header.vert_range, header.edge_range)) return false;
+  graph->vert.count = header.vert_count;
+  graph->vert.range = header.vert_range;
+  graph->edge.count = header.edge_count;
+  graph->edge.range = header.edge_range;
+  graph->edge.free = (CGraphId)header.edge_free;
+
+  uint8_t *buffer = malloc(BATCH_SIZE * sizeof(CGraphInt));
+  if (buffer == NULL) return false;
+
+  if (!read_array(stream, graph->vert.array, graph->vert.range, buffer)) goto fail;
+  if (!read_array(stream, graph->edge.head[OUT], graph->vert.range, buffer)) goto fail;
+  if (!read_array(stream, graph->edge.next[OUT], graph->edge.range, buffer)) goto fail;
+  if (!read_array(stream, graph->edge.to, graph->edge.range, buffer)) goto fail;
+
+  free(buffer);
+  rebuild_graph(graph);
   return true;
 
 fail:
+  free(buffer);
   cgraph_release(graph);
   return false;
 }

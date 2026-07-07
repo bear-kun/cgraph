@@ -8,6 +8,7 @@
 
 // set CGRAPH_EPSILON = 0 if WeightType is Integer
 
+#define CGRAPH_VERSION 0
 #define CGRAPH_INV_ID (-1)
 #define CGRAPH_INF FLT_MAX
 #define CGRAPH_EPS 1e-6f
