@@ -25,6 +25,20 @@ typedef float WeightType;
 typedef WeightType TimeType; // aoa
 typedef WeightType FlowType; // flow
 
+typedef enum {
+  CGRAPH_OK = 0,
+
+  CGRAPH_ERR_GENERAL,
+  CGRAPH_ERR_MEMORY,
+  CGRAPH_ERR_INVALID_ID,
+
+  CGRAPH_ERR_FILE_OPEN,
+  CGRAPH_ERR_FILE_FORMAT,
+  CGRAPH_ERR_FILE_VERSION,
+  CGRAPH_ERR_FILE_READ,
+  CGRAPH_ERR_FILE_WRITE,
+} CGraphStatus;
+
 // O(5 * V + 4 * E)
 
 typedef struct {
@@ -77,21 +91,24 @@ void cgraph_delete_vertex(CGraph *graph, CGraphId vid);
 
 CGraphId cgraph_add_edge(CGraph *graph, CGraphId from, CGraphId to);
 CGraphBool cgraph_add_edges(CGraph *graph, CGraphSize count, const CGraphId endpoints[][2]);
-// do not check validity
 void cgraph_delete_edge(CGraph *graph, CGraphId eid);
-// do not check validity
 void cgraph_reverse_edge(const CGraph *graph, CGraphId eid);
-// do not check validity
 CGraphId cgraph_find_edge(const CGraph *graph, CGraphId from, CGraphId to);
-// do not check validity
 void cgraph_where_edge_from_to(const CGraph *graph, CGraphId eid, CGraphId *from, CGraphId *to);
 
-CGraphBool cgraph_save_binary(CGraph *graph, const char *path);
-CGraphBool cgraph_save_binary_s(CGraph *graph, FILE *stream);
-CGraphBool cgraph_load_binary(CGraph *graph, const char *path); // Don't init graph !
-CGraphBool cgraph_load_binary_s(CGraph *graph, FILE *stream); // Don't init graph !
+CGraphStatus cgraph_save_binary(CGraph *graph, const char *path);
+CGraphStatus cgraph_save_binary_s(CGraph *graph, FILE *stream);
+CGraphStatus cgraph_load_binary(CGraph *graph, const char *path); // Don't init graph !
+CGraphStatus cgraph_load_binary_s(CGraph *graph, FILE *stream); // Don't init graph !
 
 // ----- iterator -----
+CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph);
+CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, CGraphId vid, CGraphBool dir);
+
+CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid);
+// reverse of the insertion order
+CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other);
+
 CGraphExplorer *cgraph_new_explorer(const CGraph *graph, CGraphBool dir);
 void cgraph_delete_explorer(CGraphExplorer *explorer);
 
@@ -103,13 +120,6 @@ CGraphBool cgraph_explorer_next_vertex(CGraphExplorer *explorer, CGraphId *vid);
 // reverse of the insertion order
 CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, CGraphId vid, CGraphId *eid,
                                      CGraphId *other);
-
-CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph);
-CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, CGraphId vid, CGraphBool dir);
-
-CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid);
-// reverse of the insertion order
-CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other);
 
 void cgraph_traverse_edges(const CGraph *graph, void *data,
                            void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *data));

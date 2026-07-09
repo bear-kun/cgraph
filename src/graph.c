@@ -188,7 +188,7 @@ static CGraphId vert_insert_new(CGraph *graph) {
   } else {
     const CGraphId back = graph->vert.array[graph->vert.count];
 
-    // 总是让 range 线性增长
+    // always make the range grow linearly
     if (back < graph->vert.range) {
       vid = back;
     } else if (back == graph->vert.range) {
@@ -218,7 +218,7 @@ static void vert_unlink_and_delete(CGraph *graph, const CGraphId vid) {
       return;
     }
 
-    // 收缩 range
+    // shrink range
     graph->vert.range--;
     while (graph->vert.indices[graph->vert.range - 1] >= graph->vert.count) graph->vert.range--;
   }
@@ -479,6 +479,45 @@ void cgraph_where_edge_from_to(const CGraph *graph, const CGraphId eid, CGraphId
 
 // ----- iterator -----
 
+CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph) {
+  return (CGraphIterator){graph, 0};
+}
+
+CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, const CGraphId vid,
+                                        const CGraphBool dir) {
+  return (CGraphIterator){
+      .view = graph,
+      .vert = vid,
+      .edge = graph->edge.head[dir][vid],
+      .undirected = !graph->edge.directed,
+      .dir_global = dir,
+      .dir_current = dir
+  };
+}
+
+CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid) {
+  if (iter->vert == iter->view->vert.count) return false;
+  *vid = iter->view->vert.array[iter->vert++];
+  return true;
+}
+
+CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other) {
+again:
+  if (iter->edge == CGRAPH_INV_ID) {
+    if (iter->undirected && iter->dir_current == iter->dir_global) {
+      iter->dir_current = !iter->dir_current;
+      iter->edge = iter->view->edge.head[iter->dir_current][iter->vert];
+      goto again;
+    }
+    return false;
+  }
+
+  *eid = iter->edge;
+  *other = iter->view->edge.xor_[iter->edge] ^ iter->vert;
+  iter->edge = iter->view->edge.next[iter->dir_current][iter->edge];
+  return true;
+}
+
 CGraphExplorer *cgraph_new_explorer(const CGraph *graph, const CGraphBool dir) {
   CGraphExplorer *explorer;
   if (graph->edge.directed) {
@@ -549,45 +588,6 @@ CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, const CGraphId vi
   return true;
 }
 
-CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph) {
-  return (CGraphIterator){graph, 0};
-}
-
-CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, const CGraphId vid,
-                                        const CGraphBool dir) {
-  return (CGraphIterator){
-      .view = graph,
-      .vert = vid,
-      .edge = graph->edge.head[dir][vid],
-      .undirected = !graph->edge.directed,
-      .dir_global = dir,
-      .dir_current = dir
-  };
-}
-
-CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid) {
-  if (iter->vert == iter->view->vert.count) return false;
-  *vid = iter->view->vert.array[iter->vert++];
-  return true;
-}
-
-CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other) {
-again:
-  if (iter->edge == CGRAPH_INV_ID) {
-    if (iter->undirected && iter->dir_current == iter->dir_global) {
-      iter->dir_current = !iter->dir_current;
-      iter->edge = iter->view->edge.head[iter->dir_current][iter->vert];
-      goto again;
-    }
-    return false;
-  }
-
-  *eid = iter->edge;
-  *other = iter->view->edge.xor_[iter->edge] ^ iter->vert;
-  iter->edge = iter->view->edge.next[iter->dir_current][iter->edge];
-  return true;
-}
-
 void cgraph_traverse_edges(const CGraph *graph, void *data,
                            void (*callback)(CGraphId, CGraphId, CGraphId, void *)) {
   const CGraphId *head = graph->edge.head[OUT], *next = graph->edge.next[OUT];
@@ -646,7 +646,7 @@ static uint8_t *write_buffer_64bits(uint8_t *buffer, const uint64_t data) {
 
 static uint8_t *write_buffer_cgraph_int(uint8_t *buffer, const CGraphInt data) {
   switch (sizeof(CGraphInt)) {
-  case 1:
+  default: // case 1
     *buffer = data;
     return buffer + 1;
   case 2:
@@ -655,8 +655,6 @@ static uint8_t *write_buffer_cgraph_int(uint8_t *buffer, const CGraphInt data) {
     return write_buffer_32bits(buffer, data);
   case 8:
     return write_buffer_64bits(buffer, data);
-  default:
-    return buffer;
   }
 }
 
@@ -702,7 +700,7 @@ static CGraphBool write_array(FILE *stream, const CGraphInt *array, const CGraph
   return remaining == fwrite(buffer, sizeof(CGraphInt), remaining, stream);
 }
 
-CGraphBool cgraph_save_binary_s(CGraph *graph, FILE *stream) {
+CGraphStatus cgraph_save_binary_s(CGraph *graph, FILE *stream) {
   vert_fix_free(graph);
   edge_fix_free(graph);
 
@@ -721,27 +719,30 @@ CGraphBool cgraph_save_binary_s(CGraph *graph, FILE *stream) {
       .edge_free = graph->edge.free,
   };
 
-  write_header(stream, &header);
+  if (!write_header(stream, &header)) return CGRAPH_ERR_FILE_WRITE;
 
   uint8_t *buffer = malloc(BATCH_SIZE * sizeof(CGraphInt));
-  if (buffer == NULL) return false;
+  if (buffer == NULL) return CGRAPH_ERR_MEMORY;
 
-  write_array(stream, graph->vert.array, graph->vert.range, buffer);
-  write_array(stream, graph->edge.head[OUT], graph->vert.range, buffer);
-  write_array(stream, graph->edge.next[OUT], graph->edge.range, buffer);
-  write_array(stream, graph->edge.to, graph->edge.range, buffer);
+  if (write_array(stream, graph->vert.array, graph->vert.range, buffer)
+      && write_array(stream, graph->edge.head[OUT], graph->vert.range, buffer)
+      && write_array(stream, graph->edge.next[OUT], graph->edge.range, buffer)
+      && write_array(stream, graph->edge.to, graph->edge.range, buffer)) {
+    free(buffer);
+    return CGRAPH_OK;
+  }
 
   free(buffer);
-  return true;
+  return CGRAPH_ERR_FILE_WRITE;
 }
 
-CGraphBool cgraph_save_binary(CGraph *graph, const char *path) {
+CGraphStatus cgraph_save_binary(CGraph *graph, const char *path) {
   FILE *file = fopen(path, "wb");
-  if (!file) return false;
+  if (!file) return CGRAPH_ERR_FILE_OPEN;
 
-  const CGraphBool ok = cgraph_save_binary_s(graph, file);
+  const CGraphStatus status = cgraph_save_binary_s(graph, file);
   fclose(file);
-  return ok;
+  return status;
 }
 
 static uint8_t *read_buffer_16bits(uint8_t *buffer, uint16_t *data) {
@@ -764,7 +765,7 @@ static uint8_t *read_buffer_64bits(uint8_t *buffer, uint64_t *data) {
 
 static uint8_t *read_buffer_cgraph_int(uint8_t *buffer, CGraphInt *data) {
   switch (sizeof(CGraphInt)) {
-  case 1:
+  default: // case 1
     *data = *buffer;
     return buffer + 1;
   case 2:
@@ -773,14 +774,12 @@ static uint8_t *read_buffer_cgraph_int(uint8_t *buffer, CGraphInt *data) {
     return read_buffer_32bits(buffer, (uint32_t *)data);
   case 8:
     return read_buffer_64bits(buffer, (uint64_t *)data);
-  default:
-    return buffer;
   }
 }
 
 static CGraphBool read_header(FILE *stream, CGraphFileHeader *header) {
   uint8_t buffer[128];
-  if (!fread(buffer, sizeof(CGraphFileHeader), 1, stream)) return false;
+  if (!fread(buffer, 128, 1, stream)) return false;
 
   uint8_t *ptr = buffer;
   ptr = read_buffer_32bits(ptr, &header->magic);
@@ -851,16 +850,18 @@ static void rebuild_graph(const CGraph *graph) {
   }
 }
 
-CGraphBool cgraph_load_binary_s(CGraph *graph, FILE *stream) {
+CGraphStatus cgraph_load_binary_s(CGraph *graph, FILE *stream) {
   CGraphFileHeader header;
-  if (!read_header(stream, &header)) return false;
+  if (!read_header(stream, &header)) return CGRAPH_ERR_FILE_READ;
 
-  if (header.magic != CGRAPH_MAGIC) return false;
-  if (header.version != CGRAPH_VERSION) return false;
-  if (header.int_bytes != sizeof(CGraphInt)) return false;
-  if (fseek(stream, (long)header.data_offset, SEEK_SET) != 0) return false;
+  if (header.magic != CGRAPH_MAGIC) return CGRAPH_ERR_FILE_FORMAT;
+  if (header.version != CGRAPH_VERSION) return CGRAPH_ERR_FILE_VERSION;
+  if (header.int_bytes != sizeof(CGraphInt)) return CGRAPH_ERR_GENERAL;
 
-  if (!graph_reserve(graph, header.flags, header.vert_range, header.edge_range)) return false;
+  if (!graph_reserve(graph, header.flags, header.vert_range, header.edge_range)) {
+    return CGRAPH_ERR_MEMORY;
+  }
+
   graph->vert.count = header.vert_count;
   graph->vert.range = header.vert_range;
   graph->edge.count = header.edge_count;
@@ -868,28 +869,27 @@ CGraphBool cgraph_load_binary_s(CGraph *graph, FILE *stream) {
   graph->edge.free = (CGraphId)header.edge_free;
 
   uint8_t *buffer = malloc(BATCH_SIZE * sizeof(CGraphInt));
-  if (buffer == NULL) return false;
+  if (buffer == NULL) return CGRAPH_ERR_MEMORY;
 
-  if (!read_array(stream, graph->vert.array, graph->vert.range, buffer)) goto fail;
-  if (!read_array(stream, graph->edge.head[OUT], graph->vert.range, buffer)) goto fail;
-  if (!read_array(stream, graph->edge.next[OUT], graph->edge.range, buffer)) goto fail;
-  if (!read_array(stream, graph->edge.to, graph->edge.range, buffer)) goto fail;
+  if (read_array(stream, graph->vert.array, graph->vert.range, buffer)
+      && read_array(stream, graph->edge.head[OUT], graph->vert.range, buffer)
+      && read_array(stream, graph->edge.next[OUT], graph->edge.range, buffer)
+      && read_array(stream, graph->edge.to, graph->edge.range, buffer)) {
+    free(buffer);
+    rebuild_graph(graph);
+    return CGRAPH_OK;
+  }
 
-  free(buffer);
-  rebuild_graph(graph);
-  return true;
-
-fail:
   free(buffer);
   cgraph_release(graph);
-  return false;
+  return CGRAPH_ERR_FILE_READ;
 }
 
-CGraphBool cgraph_load_binary(CGraph *graph, const char *path) {
+CGraphStatus cgraph_load_binary(CGraph *graph, const char *path) {
   FILE *file = fopen(path, "rb");
-  if (!file) return false;
+  if (!file) return CGRAPH_ERR_FILE_OPEN;
 
-  const CGraphBool ok = cgraph_load_binary_s(graph, file);
+  const CGraphStatus status = cgraph_load_binary_s(graph, file);
   fclose(file);
-  return ok;
+  return status;
 }
