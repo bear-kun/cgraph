@@ -77,24 +77,27 @@ typedef struct {
 extern "C" {
 #endif
 
-CGraphBool cgraph_init(CGraph *graph, CGraphBool directed, CGraphSize vert_cap,
-                       CGraphSize edge_cap);
+CGraphStatus cgraph_init(CGraph *graph, CGraphBool directed, CGraphSize vert_cap,
+                         CGraphSize edge_cap);
 void cgraph_release(const CGraph *graph);
-CGraphBool cgraph_copy(CGraph *dst, CGraph *src);
-CGraphBool cgraph_copy_vertices(CGraph *dst, const CGraph *src);
+CGraphStatus cgraph_copy(CGraph *dst, CGraph *src);
+CGraphStatus cgraph_copy_vertices(CGraph *dst, const CGraph *src);
 void cgraph_clear_edges(CGraph *graph);
 void cgraph_clear(CGraph *graph);
 
-CGraphId cgraph_add_vertex(CGraph *graph);
-CGraphBool cgraph_add_vertices(CGraph *graph, CGraphSize count);
-void cgraph_delete_vertex(CGraph *graph, CGraphId vid);
+CGraphBool cgraph_is_valid_vertex(const CGraph *graph, CGraphId vid);
+CGraphStatus cgraph_add_vertex(CGraph *graph, CGraphId *vid);
+CGraphStatus cgraph_add_vertices(CGraph *graph, CGraphSize count);
+CGraphStatus cgraph_delete_vertex(CGraph *graph, CGraphId vid);
 
-CGraphId cgraph_add_edge(CGraph *graph, CGraphId from, CGraphId to);
-CGraphBool cgraph_add_edges(CGraph *graph, CGraphSize count, const CGraphId endpoints[][2]);
-void cgraph_delete_edge(CGraph *graph, CGraphId eid);
-void cgraph_reverse_edge(const CGraph *graph, CGraphId eid);
-CGraphId cgraph_find_edge(const CGraph *graph, CGraphId from, CGraphId to);
-void cgraph_where_edge_from_to(const CGraph *graph, CGraphId eid, CGraphId *from, CGraphId *to);
+CGraphBool cgraph_is_valid_edge(const CGraph *graph, CGraphId eid);
+CGraphStatus cgraph_add_edge(CGraph *graph, CGraphId *eid, CGraphId from, CGraphId to);
+CGraphStatus cgraph_add_edges(CGraph *graph, CGraphSize count, const CGraphId endpoints[][2]);
+CGraphStatus cgraph_delete_edge(CGraph *graph, CGraphId eid);
+CGraphStatus cgraph_reverse_edge(const CGraph *graph, CGraphId eid);
+CGraphStatus cgraph_find_edge(const CGraph *graph, CGraphId *eid, CGraphId from, CGraphId to);
+CGraphStatus cgraph_where_edge_from_to(const CGraph *graph, CGraphId eid, CGraphId *from,
+                                       CGraphId *to);
 
 CGraphStatus cgraph_save_binary(CGraph *graph, const char *path);
 CGraphStatus cgraph_save_binary_s(CGraph *graph, FILE *stream);
@@ -102,6 +105,8 @@ CGraphStatus cgraph_load_binary(CGraph *graph, const char *path); // Don't init 
 CGraphStatus cgraph_load_binary_s(CGraph *graph, FILE *stream); // Don't init graph !
 
 // ----- iterator -----
+// By default, no checks will be done
+
 CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph);
 CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, CGraphId vid, CGraphBool dir);
 

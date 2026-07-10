@@ -10,8 +10,8 @@ c_bool_t = ctypes.c_bool
 c_int_t = ctypes.c_int32
 c_id_t = ctypes.c_int32
 c_size_t = ctypes.c_uint32
-c_resize_cb_t = ctypes.CFUNCTYPE(c_void, c_size_t, c_size_t)
 c_weight_t = ctypes.c_float
+c_status_t = ctypes.c_int
 
 
 class CGraph(ctypes.Structure):
@@ -50,39 +50,43 @@ c_graph_ptr = c_ptr(CGraph)
 
 # Core
 cgraph_init = cgraph.cgraph_init
-cgraph_init.restype = c_bool_t
+cgraph_init.restype = c_status_t
 cgraph_init.argtypes = (c_graph_ptr, c_bool_t, c_size_t, c_size_t)
 cgraph_release = cgraph.cgraph_release
 cgraph_release.argtypes = (c_graph_ptr,)
 cgraph_copy = cgraph.cgraph_copy
-cgraph_copy.restype = c_bool_t
+cgraph_copy.restype = c_status_t
 cgraph_copy.argtypes = (c_graph_ptr, c_graph_ptr)
 cgraph_clear = cgraph.cgraph_clear
 cgraph_clear.argtypes = (c_graph_ptr,)
 
 cgraph_add_vertex = cgraph.cgraph_add_vertex
-cgraph_add_vertex.restype = c_id_t
-cgraph_add_vertex.argtypes = (c_graph_ptr,)
+cgraph_add_vertex.restype = c_status_t
+cgraph_add_vertex.argtypes = (c_graph_ptr, c_ptr(c_id_t))
 cgraph_add_vertices = cgraph.cgraph_add_vertices
-cgraph_add_vertices.restype = c_bool_t
+cgraph_add_vertices.restype = c_status_t
 cgraph_add_vertices.argtypes = (c_graph_ptr, c_size_t)
 cgraph_delete_vertex = cgraph.cgraph_delete_vertex
+cgraph_delete_vertex.restype = c_status_t
 cgraph_delete_vertex.argtypes = (c_graph_ptr, c_id_t)
 
 cgraph_add_edge = cgraph.cgraph_add_edge
-cgraph_add_edge.restype = c_id_t
-cgraph_add_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
+cgraph_add_edge.restype = c_status_t
+cgraph_add_edge.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t, c_id_t)
 cgraph_add_edges = cgraph.cgraph_add_edges
-cgraph_add_edges.restype = c_bool_t
+cgraph_add_edges.restype = c_status_t
 cgraph_add_edges.argtypes = (c_graph_ptr, c_size_t, c_ptr(c_id_t * 2))
 cgraph_delete_edge = cgraph.cgraph_delete_edge
+cgraph_delete_edge.restype = c_status_t
 cgraph_delete_edge.argtypes = (c_graph_ptr, c_id_t)
 cgraph_reverse_edge = cgraph.cgraph_reverse_edge
+cgraph_reverse_edge.restype = c_status_t
 cgraph_reverse_edge.argtypes = (c_graph_ptr, c_id_t)
 cgraph_find_edge = cgraph.cgraph_find_edge
-cgraph_find_edge.restype = c_id_t
-cgraph_find_edge.argtypes = (c_graph_ptr, c_id_t, c_id_t)
+cgraph_find_edge.restype = c_status_t
+cgraph_find_edge.argtypes = (c_graph_ptr, c_ptr(c_id_t), c_id_t, c_id_t)
 cgraph_where_edge_from_to = cgraph.cgraph_where_edge_from_to
+cgraph_where_edge_from_to.restype = c_status_t
 cgraph_where_edge_from_to.argtypes = (c_graph_ptr, c_id_t, c_ptr(c_id_t), c_ptr(c_id_t))
 
 # Iterator
@@ -190,17 +194,22 @@ class Graph:
         cgraph_clear(self.__cg_ptr)
 
     def add_vertex(self):
-        return cgraph_add_vertex(self.__cg_ptr)
+        vid = c_id_t()
+        s = cgraph_add_vertex(self.__cg_ptr, c_ref(vid))
+        return vid.value
 
     def add_vertices(self, count):
         cgraph_add_vertices(self.__cg_ptr, count)
 
     def add_edge(self, from_vid, to_vid):
-        return cgraph_add_edge(self.__cg_ptr, from_vid, to_vid)
+        eid = c_id_t()
+        s = cgraph_add_edge(self.__cg_ptr, c_ref(eid), from_vid, to_vid)
+        return eid.value
 
     def add_edges(self, endpoints):
         endpoints = np.asarray(endpoints, dtype=np.dtype(c_id_t))
-        return cgraph_add_edges(self.__cg_ptr, len(endpoints), _numpy2ctypes(endpoints))
+        d = cgraph_add_edges(self.__cg_ptr, len(endpoints), _numpy2ctypes(endpoints))
+        return d
 
     def delete_vertex(self, vid):
         cgraph_delete_vertex(self.__cg_ptr, vid)
@@ -209,7 +218,9 @@ class Graph:
         cgraph_delete_edge(self.__cg_ptr, eid)
 
     def find_edge(self, from_vid, to_vid):
-        return cgraph_find_edge(self.__cg_ptr, from_vid, to_vid)
+        eid = c_id_t()
+        cgraph_find_edge(self.__cg_ptr, c_ref(eid), from_vid, to_vid)
+        return eid.value
 
     def where_edge_from_to(self, eid):
         from_vid, to_vid = c_id_t(), c_id_t()
