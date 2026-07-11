@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
+
+#ifdef CGRAPH_ASSERT_MODE
+#define cgraph_check(expr, code) assert(expr)
+#else
+#define cgraph_check(expr, code) if(!(expr)) return code
+#endif
 
 #define OUT CGRAPH_OUT
 #define IN CGRAPH_IN
@@ -78,7 +85,7 @@ static void vert_copy(CGraph *dst, const CGraph *src) {
   memcpy(dst->vert.array, src->vert.array, dst->vert.capacity * sizeof(CGraphId));
 }
 
-static void edge_reset(CGraph *graph) {
+static void edge_clear(CGraph *graph) {
   cgraph_clear_edges(graph);
   memset(graph->edge.head[OUT], CGRAPH_INV_ID, graph->vert.capacity * sizeof(CGraphId));
   memset(graph->edge.head[IN], CGRAPH_INV_ID, graph->vert.capacity * sizeof(CGraphId));
@@ -302,7 +309,7 @@ static void edge_unlink(const CGraph *graph, const CGraphId vid, const CGraphId 
 
 CGraphStatus cgraph_init(CGraph *graph, const CGraphBool directed, const CGraphSize vert_cap,
                          const CGraphSize edge_cap) {
-  if (!graph_reserve(graph, directed, vert_cap, edge_cap)) return CGRAPH_ERR_MEMORY;
+  cgraph_check(graph_reserve(graph, directed, vert_cap, edge_cap), CGRAPH_ERR_MEMORY);
   cgraph_clear(graph);
   return CGRAPH_OK;
 }
@@ -341,7 +348,7 @@ CGraphStatus cgraph_copy_vertices(CGraph *dst, const CGraph *src) {
   }
 
   vert_copy(dst, src);
-  edge_reset(dst);
+  edge_clear(dst);
   return CGRAPH_OK;
 }
 
@@ -378,7 +385,7 @@ CGraphStatus cgraph_add_vertices(CGraph *graph, const CGraphSize count) {
 }
 
 CGraphStatus cgraph_delete_vertex(CGraph *graph, const CGraphId vid) {
-  if (!cgraph_is_valid_vertex(graph, vid)) return CGRAPH_ERR_INVALID_ID;
+  cgraph_check(cgraph_is_valid_vertex(graph, vid), CGRAPH_ERR_INVALID_ID);
 
   CGraphId eid = graph->edge.head[OUT][vid];
   while (eid != CGRAPH_INV_ID) {
@@ -405,9 +412,8 @@ CGraphStatus cgraph_delete_vertex(CGraph *graph, const CGraphId vid) {
 }
 
 CGraphStatus cgraph_add_edge(CGraph *graph, CGraphId *eid, const CGraphId from, const CGraphId to) {
-  if (!cgraph_is_valid_vertex(graph, from) || !cgraph_is_valid_vertex(graph, to)) {
-    return CGRAPH_ERR_INVALID_ID;
-  }
+  cgraph_check(cgraph_is_valid_vertex(graph, from) && cgraph_is_valid_vertex(graph, to),
+               CGRAPH_ERR_INVALID_ID);
 
   if (graph->edge.count == graph->edge.capacity) {
     if (!edge_resize(graph, graph->edge.capacity + 1)) return CGRAPH_ERR_MEMORY;
@@ -424,9 +430,8 @@ CGraphStatus cgraph_add_edges(CGraph *graph, const CGraphSize count,
   for (CGraphSize i = 0; i < count; i++) {
     const CGraphId from = endpoints[i][0];
     const CGraphId to = endpoints[i][1];
-    if (!cgraph_is_valid_vertex(graph, from) || !cgraph_is_valid_vertex(graph, to)) {
-      return CGRAPH_ERR_INVALID_ID;
-    }
+    cgraph_check(cgraph_is_valid_vertex(graph, from) && cgraph_is_valid_vertex(graph, to),
+                 CGRAPH_ERR_INVALID_ID);
   }
 
   if (graph->edge.count + count > graph->edge.capacity) {
@@ -445,7 +450,7 @@ CGraphStatus cgraph_add_edges(CGraph *graph, const CGraphSize count,
 }
 
 CGraphStatus cgraph_delete_edge(CGraph *graph, const CGraphId eid) {
-  if (!cgraph_is_valid_edge(graph, eid)) return CGRAPH_ERR_INVALID_ID;
+  cgraph_check(cgraph_is_valid_edge(graph, eid), CGRAPH_ERR_INVALID_ID);
 
   const CGraphId to = graph->edge.to[eid];
   const CGraphId from = graph->edge.xor_[eid] ^ to;
@@ -456,8 +461,9 @@ CGraphStatus cgraph_delete_edge(CGraph *graph, const CGraphId eid) {
   return CGRAPH_OK;
 }
 
-CGraphStatus cgraph_reverse_edge(const CGraph *graph, const CGraphId eid) {
-  if (!cgraph_is_valid_edge(graph, eid)) return CGRAPH_ERR_INVALID_ID;
+CGraphStatus cgraph_reverse_edge(CGraph *graph, const CGraphId eid) {
+  cgraph_check(cgraph_is_valid_edge(graph, eid), CGRAPH_ERR_INVALID_ID);
+
   if (!graph->edge.directed) return CGRAPH_OK;
 
   const CGraphId to = graph->edge.to[eid];
@@ -474,9 +480,8 @@ CGraphStatus cgraph_reverse_edge(const CGraph *graph, const CGraphId eid) {
 
 CGraphStatus cgraph_find_edge(const CGraph *graph, CGraphId *eid, const CGraphId from,
                               const CGraphId to) {
-  if (!cgraph_is_valid_vertex(graph, from) || !cgraph_is_valid_vertex(graph, to)) {
-    return CGRAPH_ERR_INVALID_ID;
-  }
+  cgraph_check(cgraph_is_valid_vertex(graph, from) && cgraph_is_valid_vertex(graph, to),
+               CGRAPH_ERR_INVALID_ID);
 
   const CGraphId xor_ = from ^ to;
   const CGraphId *next = graph->edge.next[OUT];
@@ -504,7 +509,8 @@ CGraphStatus cgraph_find_edge(const CGraph *graph, CGraphId *eid, const CGraphId
 
 CGraphStatus cgraph_where_edge_from_to(const CGraph *graph, const CGraphId eid, CGraphId *from,
                                        CGraphId *to) {
-  if (!cgraph_is_valid_edge(graph, eid)) return CGRAPH_ERR_INVALID_ID;
+  cgraph_check(cgraph_is_valid_edge(graph, eid), CGRAPH_ERR_INVALID_ID);
+
   *to = graph->edge.to[eid];
   *from = graph->edge.xor_[eid] ^ *to;
   return CGRAPH_OK;
@@ -534,7 +540,7 @@ CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid) {
   return true;
 }
 
-CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other) {
+CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *res) {
 again:
   if (iter->edge == CGRAPH_INV_ID) {
     if (iter->undirected && iter->dir_current == iter->dir_global) {
@@ -546,7 +552,7 @@ again:
   }
 
   *eid = iter->edge;
-  *other = iter->view->edge.xor_[iter->edge] ^ iter->vert;
+  *res = iter->view->edge.xor_[iter->edge] ^ iter->vert;
   iter->edge = iter->view->edge.next[iter->dir_current][iter->edge];
   return true;
 }
@@ -592,7 +598,7 @@ CGraphBool cgraph_explorer_next_vertex(CGraphExplorer *explorer, CGraphId *vid) 
 }
 
 CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, const CGraphId vid, CGraphId *eid,
-                                     CGraphId *other) {
+                                     CGraphId *res) {
   CGraphId *curr = explorer->edge + vid;
 
   // undirected
@@ -609,14 +615,14 @@ CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, const CGraphId vi
       return false;
     }
     *eid = *curr;
-    *other = explorer->view->edge.xor_[*curr] ^ vid;
+    *res = explorer->view->edge.xor_[*curr] ^ vid;
     *curr = explorer->view->edge.next[*dir][*curr];
     return true;
   }
 
   if (*curr == CGRAPH_INV_ID) return false;
   *eid = *curr;
-  *other = explorer->view->edge.xor_[*curr] ^ vid;
+  *res = explorer->view->edge.xor_[*curr] ^ vid;
   *curr = explorer->view->edge.next[explorer->dir_global][*curr];
   return true;
 }

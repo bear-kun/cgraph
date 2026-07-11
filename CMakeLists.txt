@@ -3,15 +3,23 @@ project(cgraph C)
 
 set(CMAKE_C_STANDARD 11)
 
+option(CGRAPH_ASSERT_MODE
+        "If ON, use assert in Debug and NO checks in Release. If OFF, always return error codes."
+        OFF)
+
 file(GLOB CORE_SOURCES "src/graph.c")
-file(GLOB_RECURSE ALG_SOURCES "src/alg/*.c" "src/struct.c")
+file(GLOB ALG_SOURCES "src/alg/*.c" "src/struct.c")
 
 if (CGRAPH_ONLY_CORE)
-    add_library(cgraph_core STATIC ${CORE_SOURCES})
-    target_include_directories(cgraph_core PRIVATE include)
+    add_library(cgraph STATIC ${CORE_SOURCES})
+    target_include_directories(cgraph PRIVATE include)
     return()
+else ()
+    add_library(cgraph SHARED ${CORE_SOURCES} ${ALG_SOURCES})
+    target_include_directories(cgraph PRIVATE include)
+    set_target_properties(cgraph PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif ()
 
-add_library(cgraph SHARED ${CORE_SOURCES} ${ALG_SOURCES})
-target_include_directories(cgraph PRIVATE include)
-set_target_properties(cgraph PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+if (CGRAPH_ASSERT_MODE)
+    target_compile_definitions(cgraph PUBLIC CGRAPH_ASSERT_MODE=1)
+endif ()

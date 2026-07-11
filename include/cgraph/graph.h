@@ -94,7 +94,7 @@ CGraphBool cgraph_is_valid_edge(const CGraph *graph, CGraphId eid);
 CGraphStatus cgraph_add_edge(CGraph *graph, CGraphId *eid, CGraphId from, CGraphId to);
 CGraphStatus cgraph_add_edges(CGraph *graph, CGraphSize count, const CGraphId endpoints[][2]);
 CGraphStatus cgraph_delete_edge(CGraph *graph, CGraphId eid);
-CGraphStatus cgraph_reverse_edge(const CGraph *graph, CGraphId eid);
+CGraphStatus cgraph_reverse_edge(CGraph *graph, CGraphId eid);
 CGraphStatus cgraph_find_edge(const CGraph *graph, CGraphId *eid, CGraphId from, CGraphId to);
 CGraphStatus cgraph_where_edge_from_to(const CGraph *graph, CGraphId eid, CGraphId *from,
                                        CGraphId *to);
@@ -112,7 +112,7 @@ CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, CGraphId vid, CGrap
 
 CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid);
 // reverse of the insertion order
-CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *other);
+CGraphBool cgraph_iterator_next_edge(CGraphIterator *iter, CGraphId *eid, CGraphId *res);
 
 CGraphExplorer *cgraph_new_explorer(const CGraph *graph, CGraphBool dir);
 void cgraph_delete_explorer(CGraphExplorer *explorer);
@@ -124,7 +124,7 @@ void cgraph_explorer_reset_all_edges(CGraphExplorer *explorer, CGraphBool dir);
 CGraphBool cgraph_explorer_next_vertex(CGraphExplorer *explorer, CGraphId *vid);
 // reverse of the insertion order
 CGraphBool cgraph_explorer_next_edge(CGraphExplorer *explorer, CGraphId vid, CGraphId *eid,
-                                     CGraphId *other);
+                                     CGraphId *res);
 
 void cgraph_traverse_edges(const CGraph *graph, void *data,
                            void (*callback)(CGraphId from, CGraphId eid, CGraphId to, void *data));

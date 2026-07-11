@@ -195,7 +195,7 @@ class Graph:
 
     def add_vertex(self):
         vid = c_id_t()
-        s = cgraph_add_vertex(self.__cg_ptr, c_ref(vid))
+        cgraph_add_vertex(self.__cg_ptr, c_ref(vid))
         return vid.value
 
     def add_vertices(self, count):
@@ -203,13 +203,12 @@ class Graph:
 
     def add_edge(self, from_vid, to_vid):
         eid = c_id_t()
-        s = cgraph_add_edge(self.__cg_ptr, c_ref(eid), from_vid, to_vid)
+        cgraph_add_edge(self.__cg_ptr, c_ref(eid), from_vid, to_vid)
         return eid.value
 
     def add_edges(self, endpoints):
         endpoints = np.asarray(endpoints, dtype=np.dtype(c_id_t))
-        d = cgraph_add_edges(self.__cg_ptr, len(endpoints), _numpy2ctypes(endpoints))
-        return d
+        cgraph_add_edges(self.__cg_ptr, len(endpoints), _numpy2ctypes(endpoints))
 
     def delete_vertex(self, vid):
         cgraph_delete_vertex(self.__cg_ptr, vid)
