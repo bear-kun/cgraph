@@ -17,7 +17,7 @@
 #define DELETED (-2)
 
 // ----- basic -----
-
+// todo: malloc/realloc one time
 typedef struct {
   size_t old_count;
   int size;
