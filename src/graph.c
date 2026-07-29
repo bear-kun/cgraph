@@ -1,13 +1,14 @@
 #include "cgraph/graph.h"
+#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <assert.h>
 
 #ifdef CGRAPH_ASSERT_MODE
 #define cgraph_check(expr, code) assert(expr)
 #else
-#define cgraph_check(expr, code) if(!(expr)) return code
+#define cgraph_check(expr, code)                                                                   \
+  if (!(expr)) return code
 #endif
 
 #define OUT CGRAPH_OUT
@@ -17,39 +18,41 @@
 #define DELETED (-2)
 
 // ----- basic -----
-// todo: malloc/realloc one time
 typedef struct {
   size_t old_count;
   int size;
-  CGraphInt *stack[16];
+  CGraphInt **stack[16];
 } MemoryAllocator;
 
 static CGraphBool memory_alloc(MemoryAllocator *alloc, CGraphId **ptr, const size_t count) {
   void *mem = malloc(count * sizeof(CGraphInt));
   if (!mem) return false;
-  alloc->stack[alloc->size++] = *ptr = mem;
+  *ptr = mem;
+  alloc->stack[alloc->size++] = ptr;
   return true;
 }
 
 static CGraphBool memory_realloc(MemoryAllocator *alloc, CGraphId **ptr, const size_t new_count) {
   void *mem = realloc(*ptr, new_count * sizeof(CGraphInt));
   if (!mem) return false;
-  alloc->stack[alloc->size++] = *ptr = mem;
+  *ptr = mem;
+  alloc->stack[alloc->size++] = ptr;
   return true;
 }
 
 static void memory_free(const MemoryAllocator *alloc) {
   for (int i = 0; i < alloc->size; i++) {
     if (alloc->old_count == 0) {
-      free(alloc->stack[i]);
+      free(*alloc->stack[i]);
     } else {
-      realloc(alloc->stack[i], alloc->old_count);
+      void *mem = realloc(*alloc->stack[i], alloc->old_count);
+      if (mem) *alloc->stack[i] = mem;
     }
   }
 }
 
-static CGraphBool graph_reserve(CGraph *graph, const CGraphBool directed,
-                                const CGraphSize vert_cap, const CGraphSize edge_cap) {
+static CGraphBool graph_reserve(CGraph *graph, const CGraphBool directed, const CGraphSize vert_cap,
+                                const CGraphSize edge_cap) {
   MemoryAllocator alloc = {0};
 
   graph->vert.capacity = vert_cap;
@@ -524,14 +527,12 @@ CGraphIterator cgraph_get_vertex_iterator(const CGraph *graph) {
 
 CGraphIterator cgraph_get_edge_iterator(const CGraph *graph, const CGraphId vid,
                                         const CGraphBool dir) {
-  return (CGraphIterator){
-      .view = graph,
-      .vert = vid,
-      .edge = graph->edge.head[dir][vid],
-      .undirected = !graph->edge.directed,
-      .dir_global = dir,
-      .dir_current = dir
-  };
+  return (CGraphIterator){.view = graph,
+                          .vert = vid,
+                          .edge = graph->edge.head[dir][vid],
+                          .undirected = !graph->edge.directed,
+                          .dir_global = dir,
+                          .dir_current = dir};
 }
 
 CGraphBool cgraph_iterator_next_vertex(CGraphIterator *iter, CGraphId *vid) {
@@ -563,8 +564,8 @@ CGraphExplorer *cgraph_new_explorer(const CGraph *graph, const CGraphBool dir) {
     explorer = malloc(sizeof(CGraphExplorer) + graph->vert.range * sizeof(CGraphId));
     explorer->dir_current = NULL;
   } else {
-    explorer = malloc(
-        sizeof(CGraphExplorer) + graph->vert.range * (sizeof(CGraphId) + sizeof(CGraphBool)));
+    explorer = malloc(sizeof(CGraphExplorer) +
+                      graph->vert.range * (sizeof(CGraphId) + sizeof(CGraphBool)));
     explorer->dir_current = (CGraphBool *)(explorer->edge + graph->vert.range);
   }
   explorer->view = graph;
@@ -664,7 +665,6 @@ typedef struct {
   uint8_t reserved[]; // 64 bytes
 } CGraphFileHeader;
 
-
 static uint8_t *write_buffer_16bits(uint8_t *buffer, const uint16_t data) {
   const uint16_t data_net = hton16(data);
   memcpy(buffer, &data_net, 2);
@@ -763,10 +763,10 @@ CGraphStatus cgraph_save_binary_s(CGraph *graph, FILE *stream) {
   uint8_t *buffer = malloc(BATCH_SIZE * sizeof(CGraphInt));
   if (buffer == NULL) return CGRAPH_ERR_MEMORY;
 
-  if (write_array(stream, graph->vert.array, graph->vert.range, buffer)
-      && write_array(stream, graph->edge.head[OUT], graph->vert.range, buffer)
-      && write_array(stream, graph->edge.next[OUT], graph->edge.range, buffer)
-      && write_array(stream, graph->edge.to, graph->edge.range, buffer)) {
+  if (write_array(stream, graph->vert.array, graph->vert.range, buffer) &&
+      write_array(stream, graph->edge.head[OUT], graph->vert.range, buffer) &&
+      write_array(stream, graph->edge.next[OUT], graph->edge.range, buffer) &&
+      write_array(stream, graph->edge.to, graph->edge.range, buffer)) {
     free(buffer);
     return CGRAPH_OK;
   }
@@ -910,10 +910,10 @@ CGraphStatus cgraph_load_binary_s(CGraph *graph, FILE *stream) {
   uint8_t *buffer = malloc(BATCH_SIZE * sizeof(CGraphInt));
   if (buffer == NULL) return CGRAPH_ERR_MEMORY;
 
-  if (read_array(stream, graph->vert.array, graph->vert.range, buffer)
-      && read_array(stream, graph->edge.head[OUT], graph->vert.range, buffer)
-      && read_array(stream, graph->edge.next[OUT], graph->edge.range, buffer)
-      && read_array(stream, graph->edge.to, graph->edge.range, buffer)) {
+  if (read_array(stream, graph->vert.array, graph->vert.range, buffer) &&
+      read_array(stream, graph->edge.head[OUT], graph->vert.range, buffer) &&
+      read_array(stream, graph->edge.next[OUT], graph->edge.range, buffer) &&
+      read_array(stream, graph->edge.to, graph->edge.range, buffer)) {
     free(buffer);
     rebuild_graph(graph);
     return CGRAPH_OK;
